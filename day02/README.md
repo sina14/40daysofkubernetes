@@ -87,6 +87,7 @@ Sixth, Push the image to docker hub
 ```console
 docker push sinatavakkol/40daysofkube:02.0
 ```
+![image](https://github.com/sina14/40daysofkubernetes/assets/8893590/1ae1abb2-ee51-4577-b396-a7775bb92b6e)
 
 7th, Run and create the container
 ```console
