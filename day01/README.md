@@ -1,6 +1,25 @@
-# Day 01
+## Day 1/40
+# Docker Tutorial For Beginners - Docker Fundamentals
+[Video Link](https://www.youtube.com/watch?v=ul96dslvVwY)
+It's all about easy Build, Ship and Run.
+@piyushsachdeva 
 
-### Docker Architecture
-![docker_architecture drawio](https://github.com/sina14/40daysofkubernetes/assets/8893590/d58de65d-b742-4418-b2e8-afe724d4cf65)
+### What we learn:
+1. What is Docker
+2. Understanding Containers V/S Virtual Machines
+3. Containers V/S Virtual machines with the help of a Building and House analogy
+4. Challenges with the non-containerized applications
+5. How Docker solves the challenges
+6. A Simple Docker WorkFlow
+7. Docker Architecture
+
+### Tasks
 
 
+**Docker Workflow**
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/olpxr9vrrs5oauj6oc8m.png)
+
+**Docker Architecture**
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/tav2hymoraoncpb5mepa.png)
