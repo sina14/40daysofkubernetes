@@ -43,7 +43,7 @@ kind version 0.23.0
 
 ```
 
-### 3. Installing kubectl
+### 3. Installing `kubectl`
 [Installation Guid](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 ```console
 root@localhost:~# curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -92,9 +92,54 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 ```
 
+### 5. Interact with the clsuter
+```console
+root@localhost:~# kind get clusters
+jolly
+root@localhost:~# kubectl get nodes -o wide
+NAME                  STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                         KERNEL-VERSION      CONTAINER-RUNTIME
+jolly-control-plane   Ready    control-plane   15m   v1.29.4   172.18.0.2    <none>        Debian GNU/Linux 12 (bookworm)   5.15.0-46-generic   containerd://1.7.15
 
+```
 
+### 6. Configuring a multi-nodes `kind` cluster
+yaml file with 3 nodes for instance. [Find more](https://kind.sigs.k8s.io/docs/user/quick-start/#advanced)
+```
+# three node (two workers) cluster config
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
 
+```
+
+```console
+root@localhost:~# kind create cluster --image kindest/node:v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8 --name lucky-luke --config kind-lucky-luke-config.yaml
+
+```
+---
+**Note**
+Important website for exam:
+1. [Kubernetes Cheatsheet](https://kubernetes.io/vi/docs/reference/kubectl/cheatsheet/)
+2. [Kubernetes Blog](https://kubernetes.io/blog/)
+---
+
+### 7. Switching between contexts
+```console
+root@localhost:~# kubectl config get-contexts
+CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
+*         kind-jellyfish   kind-jellyfish   kind-jellyfish
+          kind-jolly       kind-jolly       kind-jolly
+root@localhost:~# kubectl config use-context kind-jolly
+Switched to context "kind-jolly".
+root@localhost:~# kubectl config get-contexts
+CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
+          kind-jellyfish   kind-jellyfish   kind-jellyfish
+*         kind-jolly       kind-jolly       kind-jolly
+
+```
 
 
 
