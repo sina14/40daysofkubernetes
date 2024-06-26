@@ -1,9 +1,18 @@
-<mxfile host="app.diagrams.net" modified="2024-06-26T14:38:07.751Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0" version="24.5.5" etag="HsB02cG4zBieLpLRjzpl" type="github">
+<mxfile host="app.diagrams.net" modified="2024-06-26T14:41:29.210Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0" etag="RTBB9hp9Egss6sNse-4U" version="24.5.5" type="github">
   <diagram name="Page-1" id="wMEaXiZTN7ye7j9jagXj">
-    <mxGraphModel>
+    <mxGraphModel dx="1434" dy="781" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="pVgq_ht21RBZaUko71De-2" value="" style="whiteSpace=wrap;html=1;aspect=fixed;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;" vertex="1" parent="1">
+          <mxGeometry x="30" y="180" width="290" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="pVgq_ht21RBZaUko71De-3" value="Control Plane / Master Node" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;" vertex="1" parent="1">
+          <mxGeometry x="60" y="470" width="230" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pVgq_ht21RBZaUko71De-4" value="" style="image;html=1;image=img/lib/clip_art/computers/Database_128x128.png;sketch=1;hachureGap=4;jiggle=2;curveFitting=1;fontFamily=Architects Daughter;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;" vertex="1" parent="1">
+          <mxGeometry x="50" y="285" width="60" height="65" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
