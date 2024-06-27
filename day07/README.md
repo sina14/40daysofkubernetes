@@ -169,4 +169,250 @@ NAME          READY   STATUS    RESTARTS   AGE   IP           NODE              
 nginx-pod     1/1     Running   0          28m   10.244.2.2   lucky-luke-worker2   <none>           <none>
 nginx-pod-2   1/1     Running   0          32s   10.244.1.2   lucky-luke-worker    <none>           <none>
 ```
-As you can see the second `pod` is running on worker1 `node`
+As you can see the second `pod` is running on worker1 `node`. Also instead of using *create* with `kubectl`, we can use *apply* with `kubectl`.
+
+
+### 3. Update and edit directly an object on the cluster
+For instance we need to change the version of `nginx` which is running with the latest version to 1.18. We run the command and change the version in front of `image` key and then save it.
+```yaml
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2024-06-27T16:48:31Z"
+  labels:
+    run: nginx-pod
+  name: nginx-pod
+  namespace: default
+  resourceVersion: "9983"
+  uid: 6d0bd9ee-9f92-45b4-9416-87e02568a435
+spec:
+  containers:
+  - image: nginx:1.18
+    imagePullPolicy: Always
+...
+```
+```console
+root@localhost:~# kubectl edit pod nginx-pod
+pod/nginx-pod edited
+```
+
+for confirmation and see what happened, you can run the below command and see the logs and container version that is already is running.
+
+```console
+root@localhost:~# kubectl describe pod nginx-pod
+Name:             nginx-pod
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             lucky-luke-worker2/172.19.0.2
+Start Time:       Thu, 27 Jun 2024 16:48:31 +0000
+Labels:           run=nginx-pod
+Annotations:      <none>
+Status:           Running
+IP:               10.244.2.2
+IPs:
+  IP:  10.244.2.2
+Containers:
+  nginx-pod:
+    Container ID:   containerd://b9ff29ff39e7446d9ad8ab9a60fe8f29d8c4ed4ceb35c9628bc692d228bd096c
+    Image:          nginx:1.18
+    Image ID:       docker.io/library/nginx@sha256:e90ac5331fe095cea01b121a3627174b2e33e06e83720e9a934c7b8ccc9c55a0
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Thu, 27 Jun 2024 17:40:58 +0000
+    Last State:     Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Thu, 27 Jun 2024 16:48:41 +0000
+      Finished:     Thu, 27 Jun 2024 17:40:51 +0000
+    Ready:          True
+    Restart Count:  1
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-j4sf7 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-j4sf7:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age                From               Message
+  ----    ------     ----               ----               -------
+  Normal  Scheduled  52m                default-scheduler  Successfully assigned default/nginx-pod to lucky-luke-worker2
+  Normal  Pulling    52m                kubelet            Pulling image "nginx:latest"
+  Normal  Pulled     52m                kubelet            Successfully pulled image "nginx:latest" in 8.319s (8.319s including waiting). Image size: 71010466 bytes.
+  Normal  Killing    17s                kubelet            Container nginx-pod definition changed, will be restarted
+  Normal  Pulling    17s                kubelet            Pulling image "nginx:1.18"
+  Normal  Created    10s (x2 over 52m)  kubelet            Created container nginx-pod
+  Normal  Started    10s (x2 over 52m)  kubelet            Started container nginx-pod
+  Normal  Pulled     10s                kubelet            Successfully pulled image "nginx:1.18" in 6.882s (6.882s including waiting). Image size: 53630764 bytes.
+```
+
+### 4. Interaction with the container
+ ```console
+root@localhost:~# kubectl exec -it nginx-pod -- sh
+# pwd
+/
+command terminated with exit code 127
+root@localhost:~# kubectl get pods
+NAME          READY   STATUS    RESTARTS        AGE
+nginx-pod     1/1     Running   1 (8m19s ago)   60m
+nginx-pod-2   1/1     Running   0  
+```
+Terminating with `Ctrl`+`D`
+
+### 5. Create `yaml` file of a `pod` in `dry-run` mode
+```console
+root@localhost:~# kubectl run nginx-pod-3 --image=nginx:latest --dry-run=client -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: nginx-pod3
+  name: nginx-pod3
+spec:
+  containers:
+  - image: nginx:latest
+    name: nginx-pod3
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+```
+You can direct the result into a new `yaml` file and make your own change.
+```console
+root@localhost:~# kubectl run nginx-pod-3 --image=nginx:latest --dry-run=client -o yaml > nginx-pod-3.yaml
+```
+**Note** in `dry-run` step nothing is creates and you can use the `dry-run` step to check your manifests before deployment.
+
+### 6. Get more details of running pods
+```console
+root@localhost:~# kubectl get pods -o wide
+NAME          READY   STATUS    RESTARTS      AGE   IP           NODE                 NOMINATED NODE   READINESS GATES
+nginx-pod     1/1     Running   1 (19m ago)   71m   10.244.2.2   lucky-luke-worker2   <none>           <none>
+nginx-pod-2   1/1     Running   0             43m   10.244.1.2   lucky-luke-worker    <none>           <none>
+root@localhost:~# kubectl get pods --show-labels
+NAME          READY   STATUS    RESTARTS      AGE   LABELS
+nginx-pod     1/1     Running   1 (21m ago)   73m   run=nginx-pod
+nginx-pod-2   1/1     Running   0             44m   env=demo,type=frontend
+```
+Labels are good for grouping our pods.
+
+---
+
+### Task 3
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: test
+  name: redis
+spec:
+  containers:
+  - image: rediss
+    name: redis
+```
+
+```console
+root@localhost:~# kubectl apply -f task3.yaml
+pod/redis created
+root@localhost:~# kubectl get pods
+NAME          READY   STATUS         RESTARTS      AGE
+nginx-pod     1/1     Running        1 (36m ago)   89m
+nginx-pod-2   1/1     Running        0             60m
+redis         0/1     ErrImagePull   0             12s
+root@localhost:~# kubectl describe pod redis
+Name:             redis
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             lucky-luke-worker2/172.19.0.2
+Start Time:       Thu, 27 Jun 2024 18:17:24 +0000
+Labels:           app=test
+Annotations:      <none>
+Status:           Pending
+IP:               10.244.2.3
+IPs:
+  IP:  10.244.2.3
+Containers:
+  redis:
+    Container ID:
+    Image:          rediss
+    Image ID:
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       ImagePullBackOff
+    Ready:          False
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-qks6m (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       False
+  ContainersReady             False
+  PodScheduled                True
+Volumes:
+  kube-api-access-qks6m:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  94s                default-scheduler  Successfully assigned default/redis to lucky-luke-worker2
+  Normal   BackOff    17s (x5 over 92s)  kubelet            Back-off pulling image "rediss"
+  Warning  Failed     17s (x5 over 92s)  kubelet            Error: ImagePullBackOff
+  Normal   Pulling    3s (x4 over 93s)   kubelet            Pulling image "rediss"
+  Warning  Failed     2s (x4 over 92s)   kubelet            Failed to pull image "rediss": failed to pull and unpack image "docker.io/library/rediss:latest": failed to resolve reference "docker.io/library/rediss:latest": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed
+  Warning  Failed     2s (x4 over 92s)   kubelet            Error: ErrImagePull
+root@localhost:~# kubectl edit pod redis
+pod/redis edited
+root@localhost:~# kubectl get pods
+NAME          READY   STATUS             RESTARTS      AGE
+nginx-pod     1/1     Running            1 (38m ago)   90m
+nginx-pod-2   1/1     Running            0             62m
+redis         0/1     ImagePullBackOff   0             2m5s
+root@localhost:~# kubectl get pods
+NAME          READY   STATUS    RESTARTS      AGE
+nginx-pod     1/1     Running   1 (38m ago)   91m
+nginx-pod-2   1/1     Running   0             62m
+redis         1/1     Running   0             2m10s
+
+```
+As we see the image is not valid and we edit to correct image name and the problem solved!
+
+
+
+
+
