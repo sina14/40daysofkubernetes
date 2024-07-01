@@ -416,7 +416,7 @@ spec:
 Syntax:
 `
 kubectl create nodeport NAME [--tcp=port:targetPort] [--dry-run=server|client|none]
-```
+`
 Example
 ```
 kubectl create service nodeport myservice --node-port=31000 --tcp=3000:80
