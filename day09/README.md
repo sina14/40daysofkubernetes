@@ -10,8 +10,7 @@ We're going to look at `service` in `kubernetes` and its types as below list:
 1. ClusterIP
 2. NodePort
 3. LoadBalancer
-4. External Names
-- Cloud Provider’s Load Balancer
+4. External Name
 
 ---
 
@@ -244,17 +243,190 @@ service/nodeport-svc   NodePort    10.96.145.18   <none>        80:30001/TCP   6
 
 ```
 
+- Check the `service` from our local:
+```console
+root@localhost:~# curl localhost:30001
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
 
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
 
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+---
 
+### 2. Cluster IP
+Because every `pod` which is restarted has got another `IP` address, we need to create a `clusterIP` service type. It's default `service` type in `Kubernetes`. We only need `port` and `targetPort` in its yaml configuration file.
+`selector` section is related to `deployment` label.
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/hqwrgo0mr1edfzqm36hh.png)
+(Photo from the video)
 
+#### Implementation
+```yaml
+apiVersion: v1
 
+kind: Service
 
+metadata:
+  name: clusterip-svc
+  labels:
+    env: demo
 
+spec:
+  selector:
+      env: demo
+  type:
+    ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
 
+```
 
+```console
+root@localhost:~# kubectl apply -f clusterip.yaml
+service/clusterip-svc created
+root@localhost:~# kubectl get svc
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+clusterip-svc   ClusterIP   10.96.242.10   <none>        80/TCP         6s
+kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP        67m
+nodeport-svc    NodePort    10.96.145.18   <none>        80:30001/TCP   51m
+root@localhost:~# kubectl get svc --show-labels -o wide
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE   SELECTOR   LABELS
+clusterip-svc   ClusterIP   10.96.242.10   <none>        80/TCP         23s   env=demo   env=demo
+kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP        67m   <none>     component=apiserver,provider=kubernetes
+nodeport-svc    NodePort    10.96.145.18   <none>        80:30001/TCP   51m   env=demo   env=demo
+root@localhost:~# kubectl describe svc clusterip-svc
+Name:              clusterip-svc
+Namespace:         default
+Labels:            env=demo
+Annotations:       <none>
+Selector:          env=demo
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.96.242.10
+IPs:               10.96.242.10
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:         10.244.1.4:80,10.244.2.3:80,10.244.2.4:80
+Session Affinity:  None
+Events:            <none>
+root@localhost:~# kubectl get endpoints
+NAME            ENDPOINTS                                   AGE
+clusterip-svc   10.244.1.4:80,10.244.2.3:80,10.244.2.4:80   3m25s
+kubernetes      172.19.0.2:6443                             70m
+nodeport-svc    10.244.1.4:80,10.244.2.3:80,10.244.2.4:80   54m
 
+```
+---
 
+### 3. Load Balancer
+`LoadBalancer` services are ideal for applications that need to handle high traffic volumes, such as web applications or APIs. With `LoadBalancer` services, we can access our application using a single IP address assigned to the load balancer.[source](https://www.baeldung.com/ops/kubernetes-service-types#3-loadbalancer-services)
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/18krfnomfxnktom6szfe.png)
+(Photo from the video)
+
+#### Implementation
+
+```yaml
+apiVersion: v1
+
+kind: Service
+
+metadata:
+  name: loadbalancer-svc
+  labels:
+    env: demo
+
+spec:
+  selector:
+      env: demo
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+```console
+root@localhost:~# kubectl apply -f loadbalancer.yaml
+service/loadbalancer-svc created
+root@localhost:~# kubectl get svc
+NAME               TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+clusterip-svc      ClusterIP      10.96.242.10    <none>        80/TCP         12m
+kubernetes         ClusterIP      10.96.0.1       <none>        443/TCP        80m
+loadbalancer-svc   LoadBalancer   10.96.153.185   <pending>     80:31076/TCP   7s
+nodeport-svc       NodePort       10.96.145.18    <none>        80:30001/TCP   64m
+root@localhost:~# kubectl get all
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/nginx-deploy-c95b4f658-gj6jl   1/1     Running   0          59m
+pod/nginx-deploy-c95b4f658-nc2qg   1/1     Running   0          59m
+pod/nginx-deploy-c95b4f658-nfgrn   1/1     Running   0          59m
+
+NAME                       TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/clusterip-svc      ClusterIP      10.96.242.10    <none>        80/TCP         13m
+service/kubernetes         ClusterIP      10.96.0.1       <none>        443/TCP        80m
+service/loadbalancer-svc   LoadBalancer   10.96.153.185   <pending>     80:31076/TCP   15s
+service/nodeport-svc       NodePort       10.96.145.18    <none>        80:30001/TCP   64m
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-deploy   3/3     3            3           59m
+
+NAME                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-deploy-c95b4f658   3         3         3       59m
+
+```
+As we can see, `EXTERNAL-IP` for our `LoadBalancer` service type is `<pending>`. This is what we can provide an IP Address or DNS name for our users, and yer we don't have provision them in the service and it behaves as a `NodePort` service.
+[For more info](https://kind.sigs.k8s.io/docs/user/loadbalancer/)
+
+---
+
+### 4. External Name
+We actually map it to a DNS.
+The below sample is from official documentation.[source](https://kubernetes.io/docs/concepts/services-networking/service/#externalname)
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  namespace: prod
+spec:
+  type: ExternalName
+  externalName: my.database.example.com
+```
+---
+
+### 5. Creating `service` in command-line
+Syntax:
+`
+kubectl create nodeport NAME [--tcp=port:targetPort] [--dry-run=server|client|none]
+```
+Example
+```
+kubectl create service nodeport myservice --node-port=31000 --tcp=3000:80
+```
+---
+
+### 6. Useful links
+- [Kubernetes Official](https://kubernetes.io/docs/reference/kubectl/quick-reference/)
+- [Kubectl Command Cheatsheet](https://www.bluematador.com/learn/kubectl-cheatsheet)
+- [Kubectl Reference Docs](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-strong-getting-started-strong-)
 
 
 
