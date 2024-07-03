@@ -132,6 +132,202 @@ nginx-demo   1/1     1            1           18s
 
 ```
 
+#### 3. Communicate between 2 namespaces:
+```console
+root@localhost:~# kubectl get all -o wide
+NAME                              READY   STATUS    RESTARTS   AGE     IP           NODE                 NOMINATED NODE   READINESS GATES
+pod/nginx-test-574bc578fc-cj5fb   1/1     Running   0          5m16s   10.244.2.2   lucky-luke-worker2   <none>           <none>
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   2d    <none>
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES   SELECTOR
+deployment.apps/nginx-test   1/1     1            1           5m16s   nginx        nginx    app=nginx-test
+
+NAME                                    DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES   SELECTOR
+replicaset.apps/nginx-test-574bc578fc   1         1         1       5m16s   nginx        nginx    app=nginx-test,pod-template-hash=574bc578fc
+
+root@localhost:~# kubectl get all -n demo -o wide
+NAME                              READY   STATUS    RESTARTS   AGE     IP           NODE                NOMINATED NODE   READINESS GATES
+pod/nginx-demo-745b695d7d-hh28q   1/1     Running   0          7m48s   10.244.1.2   lucky-luke-worker   <none>           <none>
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES   SELECTOR
+deployment.apps/nginx-demo   1/1     1            1           7m48s   nginx        nginx    app=nginx-demo
+
+NAME                                    DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES   SELECTOR
+replicaset.apps/nginx-demo-745b695d7d   1         1         1       7m48s   nginx        nginx    app=nginx-demo,pod-template-hash=745b695d7d
+
+```
+- Both can have communication and we test it by `curl` with `ip`
+
+```console
+# curl 10.244.2.2
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+# curl 10.244.1.2
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+
+- Scaling both `deployment`
+```console
+root@localhost:~# kubectl scale --replicas=3 deploy nginx-test
+deployment.apps/nginx-test scaled
+root@localhost:~# kubectl scale --replicas=3 deploy nginx-demo -n demo
+deployment.apps/nginx-demo scaled
+
+root@localhost:~# kubectl get pod,deploy
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/nginx-test-574bc578fc-cj5fb   1/1     Running   0          14m
+pod/nginx-test-574bc578fc-cqj5r   1/1     Running   0          10s
+pod/nginx-test-574bc578fc-nxt4j   1/1     Running   0          10s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-test   3/3     3            3           14m
+root@localhost:~# kubectl get pod,deploy -n demo
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/nginx-demo-745b695d7d-hh28q   1/1     Running   0          16m
+pod/nginx-demo-745b695d7d-rp88f   1/1     Running   0          19s
+pod/nginx-demo-745b695d7d-sc8rg   1/1     Running   0          19s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-demo   3/3     3            3           16m
+
+```
+
+- Creating `service` for both `deployment`
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ixs4pp3qzju16y9c62sw.png)
+(Photo from the video)
+
+Test in `default` namespace:
+```console
+root@localhost:~# kubectl expose --name svc-test deploy/nginx-test --port 80
+service/svc-test exposed
+root@localhost:~# kubectl get pod
+NAME                          READY   STATUS    RESTARTS   AGE
+nginx-test-574bc578fc-cj5fb   1/1     Running   0          29m
+nginx-test-574bc578fc-cqj5r   1/1     Running   0          15m
+nginx-test-574bc578fc-nxt4j   1/1     Running   0          15m
+root@localhost:~# kubectl exec -it nginx-test-574bc578fc-cj5fb -- sh
+# cat /etc/resolv.conf
+search default.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+# curl svc-demo.demo.svc.cluster.local
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+```
+Test in `demo` namespace:
+```console
+root@localhost:~# kubectl expose --name svc-demo deploy/nginx-demo --port 80 -n demo
+service/svc-demo exposed
+root@localhost:~# kubectl get pod -n demo
+NAME                          READY   STATUS    RESTARTS   AGE
+nginx-demo-745b695d7d-hh28q   1/1     Running   0          35m
+nginx-demo-745b695d7d-rp88f   1/1     Running   0          19m
+nginx-demo-745b695d7d-sc8rg   1/1     Running   0          19m
+root@localhost:~# kubectl exec -it nginx-demo-745b695d7d-hh28q -n demo -- sh
+# cat /etc/resolv.conf
+search demo.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+# curl svc-test.default.svc.cluster.local
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+
+
+
+
+
+
+
 
 
 
