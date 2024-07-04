@@ -81,16 +81,54 @@ kube-system   kube-proxy   3         3         3       3            3           
 
 ---
 
-#### 2. Cronjobs/Jobs
+#### 2. Cronjobs
 See the [Cronitor](https://crontab.guru/) website for understand how it can be configured for tasks run in specific time.
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/h2ivgxcoezldutv92tra.png)
 (Photo from the video)
 
+- Sample from `Kubernetes` [website](https://kubernetes.io/docs/tasks/job/automated-tasks-with-cron-jobs/#creating-a-cron-job):
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+```
 
 
+#### 3. Jobs
+A Job creates one or more Pods and will continue to retry execution of the Pods until a specified number of them successfully terminate. As pods successfully complete, the Job tracks the successful completions. When a specified number of successful completions is reached, the task (ie, Job) is complete. Deleting a Job will clean up the Pods it created. Suspending a Job will delete its active Pods until the Job is resumed again. [source](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
 
-
-
+- Sample from `Kubernetes` [website](https://kubernetes.io/docs/concepts/workloads/controllers/job/#running-an-example-job)
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never
+  backoffLimit: 4
+```
 
 
 
