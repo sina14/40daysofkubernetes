@@ -54,10 +54,37 @@ nginx-ds-mf4gz   1/1     Running   0          19s   10.244.2.9    lucky-luke-wor
 nginx-ds-rslrm   1/1     Running   0          19s   10.244.1.12   lucky-luke-worker    <none>           <none>
 
 ```
+As you can see, our custom `workload` as `daemonset` is running on all `worker` nodes and because it is not a `control-plane` component and the `control-plane` node doesn't tolerate custom `workload`, it doesn't run on `control-plane` node. (but we can change it)
 
+If one of these `pod` removed, it will run another one on that `node`
+```console
+root@localhost:~# kubectl get po
+NAME             READY   STATUS    RESTARTS   AGE
+nginx-ds-mf4gz   1/1     Running   0          9m40s
+nginx-ds-rslrm   1/1     Running   0          9m40s
+root@localhost:~# kubectl delete pod nginx-ds-mf4gz
+pod "nginx-ds-mf4gz" deleted
+root@localhost:~# kubectl get po
+NAME             READY   STATUS    RESTARTS   AGE
+nginx-ds-946m4   1/1     Running   0          5s
+nginx-ds-rslrm   1/1     Running   0          10m
 
+```
+- See all `daemonset` on our `cluster`:
+```console
+root@localhost:~# kubectl get ds --all-namespaces
+NAMESPACE     NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+default       nginx-ds     2         2         2       2            2           <none>                   10m
+kube-system   kindnet      3         3         3       3            3           kubernetes.io/os=linux   3d
+kube-system   kube-proxy   3         3         3       3            3           kubernetes.io/os=linux   3d
+```
 
+---
 
+#### 2. Cronjobs/Jobs
+See the [Cronitor](https://crontab.guru/) website for understand how it can be configured for tasks run in specific time.
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/h2ivgxcoezldutv92tra.png)
+(Photo from the video)
 
 
 
