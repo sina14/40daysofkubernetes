@@ -163,4 +163,85 @@ redis   1/1     Running   0          17s   10.244.2.12   lucky-luke-worker2   <n
 
 ```
 
+Let's delete the taint of one node and see what will happen to our pending `pod`:
+```console
+root@localhost:~# kubectl taint node lucky-luke-worker gpu=true:NoSchedule-
+node/lucky-luke-worker untainted
+root@localhost:~# kubectl get pods -o wide
+NAME    READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
+nginx   1/1     Running   0          22m   10.244.1.14   lucky-luke-worker    <none>           <none>
+redis   1/1     Running   0          11m   10.244.2.12   lucky-luke-worker2   <none>           <none>
+
+```
+
+- By default, the `control-plane` node has taint `NoSchedule`
+```console
+root@localhost:~# kubectl get nodes
+NAME                       STATUS   ROLES           AGE   VERSION
+lucky-luke-control-plane   Ready    control-plane   8d    v1.30.0
+lucky-luke-worker          Ready    <none>          8d    v1.30.0
+lucky-luke-worker2         Ready    <none>          8d    v1.30.0
+root@localhost:~# kubectl describe node lucky-luke-control-plane | grep Taint
+Taints:             node-role.kubernetes.io/control-plane:NoSchedule
+```
+
+---
+
+#### Selector
+Instead a `node` can decide which type `pod` to accept, it will give the decision to a `pod` to which `node` can deployed on.
+
+- Let's try:
+```console
+root@localhost:~# kubectl run nginx2 --image=nginx --dry-run=client -o yaml > nginx2-day14.yaml
+root@localhost:~# vim nginx2-day14.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: nginx2
+  name: nginx2
+spec:
+  containers:
+  - image: nginx
+    name: nginx2
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  nodeSelector:
+    gpu: "false"
+status: {}
+```
+
+```console
+root@localhost:~# kubectl apply -f nginx2-day14.yaml
+pod/nginx2 created
+root@localhost:~# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
+nginx    1/1     Running   0          46m   10.244.1.14   lucky-luke-worker    <none>           <none>
+nginx2   0/1     Pending   0          8s    <none>        <none>               <none>           <none>
+redis    1/1     Running   0          35m   10.244.2.12   lucky-luke-worker2   <none>           <none>
+
+```
+
+- Label one node and let's see what will happen:
+```console
+root@localhost:~# kubectl label node lucky-luke-worker gpu="false"
+node/lucky-luke-worker labeled
+root@localhost:~# kubectl get pods -o wide
+NAME     READY   STATUS    RESTARTS   AGE     IP            NODE                 NOMINATED NODE   READINESS GATES
+nginx    1/1     Running   0          49m     10.244.1.14   lucky-luke-worker    <none>           <none>
+nginx2   1/1     Running   0          3m21s   10.244.1.15   lucky-luke-worker    <none>           <none>
+redis    1/1     Running   0          38m     10.244.2.12   lucky-luke-worker2   <none>           <none>
+```
+
+
+
+
+
+
+
 
