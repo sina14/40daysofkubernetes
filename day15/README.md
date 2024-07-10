@@ -82,7 +82,6 @@ nginx   1/1     Running   0          6m19s   10.244.1.17   lucky-luke-worker   <
 
 - Another example:
 ```yaml
----
 apiVersion: v1
 kind: Pod
 metadata:
@@ -91,21 +90,50 @@ spec:
   affinity:
     nodeAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-            - key: disktype
-              operator: In
-              values:
-                - hdd
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - hdd
   containers:
   - name: redis
     image: redis
 
 ```
 
+- Run the pod:
+```console
+root@localhost:~# kubectl get pods --show-labels -o wide
+NAME    READY   STATUS    RESTARTS   AGE   IP            NODE                NOMINATED NODE   READINESS GATES   LABELS
+nginx   1/1     Running   0          22m   10.244.1.17   lucky-luke-worker   <none>           <none>            <none>
+redis   1/1     Running   0          14s   10.244.1.18   lucky-luke-worker   <none>           <none>            <none>
 
+```
 
+- Let's delete the node label:
+```console
+root@localhost:~# kubectl label node lucky-luke-worker disktype-
+node/lucky-luke-worker unlabeled
+root@localhost:~# kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          29m
+redis   1/1     Running   0          6m43s
+```
+As you can see, it will be affected the pods which will be create after that. So There's no change for running pods.
 
+Also, there's an `operator: Exists` which means it's not important what value the key has, if key exists, it's matchs.
+
+---
+
+#### Node Affinity VS Taints & Toleration:
+- A `taint` is a label that can be applied to a node in a Kubernetes cluster, which signifies that the node is not able to accept pods that do not have a corresponding `toleration`.
+- A `toleration` is a label that can be applied to a pod, which signifies that the pod is able to tolerate a node with a matching taint.
+- In Kubernetes, a `Node Selector` is a way to specify which nodes in a cluster a particular pod should be scheduled on. It works by assigning labels to nodes and then matching those labels with the pod’s specification.
+- In Kubernetes, `Node Affinity` is a way to specify rules that determine which nodes in a cluster a particular pod should be scheduled on. Node affinity can be used to ensure that pods are deployed on nodes with specific characteristics, such as available resources, location, or hardware capabilities.
+
+[source](https://blog.devops.dev/taints-and-tollerations-vs-node-affinity-42ec5305e11a)
 
 
 
