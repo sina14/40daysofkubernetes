@@ -29,8 +29,7 @@ For example: [source](https://kubernetes.io/docs/concepts/configuration/manage-r
 
 (Photo from the video)
 
-- Insufficient Resources
-- OOM
+There're 2 common errors we will be faced, if a pod wants to exceeds the `limit`. One because of `node` limitation, **Insufficient Resources**, and another one because of the pod limitation, **OOM** error.
 
 ---
 
@@ -167,7 +166,7 @@ memory-demo-3   0/1     Pending            0            20s
 
 ```
 
-- Events of the pod in `Pending` status is `Insufficient memory`:
+- Error message of the pod in `Pending` status is `Insufficient memory`:
 ```
 Events:
   Type     Reason            Age   From               Message
