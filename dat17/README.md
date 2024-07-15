@@ -130,7 +130,7 @@ php-apache   Deployment/php-apache   cpu: 0%/50%   1         10        1        
 
 Now, we generate some loads on the `deployment` and see what will be happened.
 ```console
-root@localhost:~# kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done
+root@localhost:~# kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
 OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!
 ```
 
