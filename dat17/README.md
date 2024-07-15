@@ -41,7 +41,7 @@ There are another types of `autoscaling` for instance:
 ---
 
 ### Demo
-For doing some hands-on we need the `metrics-server` pod is running.
+For doing some hands-on demo, we need the `metrics-server` pod is running.
 ```console
 root@localhost:~# kubectl get pods -n kube-system
 NAME                                               READY   STATUS    RESTARTS      AGE
@@ -60,4 +60,160 @@ kube-scheduler-lucky-luke-control-plane            1/1     Running   1 (13d ago)
 metrics-server-55677cdb4c-t5wrw                    1/1     Running   0             108s
 
 ```
+
+- The deployment yaml file:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+spec:
+  selector:
+    matchLabels:
+      run: php-apache
+  template:
+    metadata:
+      labels:
+        run: php-apache
+    spec:
+      containers:
+      - name: php-apache
+        image: registry.k8s.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-apache
+  labels:
+    run: php-apache
+spec:
+  ports:
+  - port: 80
+  selector:
+    run: php-apache
+```
+It implements 2 workloads in one yaml file, one for `deployment` and one for `service` with 3 `-` between them.
+Let's run them
+```console
+root@localhost:~# kubectl apply -f day17-deploy.yaml
+deployment.apps/php-apache created
+service/php-apache created
+root@localhost:~# kubectl get po,deploy,svc
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/php-apache-678865dd57-rlgqw   1/1     Running   0          67s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/php-apache   1/1     1            1           67s
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   14d
+service/php-apache   ClusterIP   10.96.250.6   <none>        80/TCP    67s
+```
+
+We define 50% threshold for cpu usage for the `deployment` and minimum and maximum `replica` for it.
+```console
+root@localhost:~# kubectl autoscale deploy php-apache --cpu-percent=50 --min=1 --max=10
+horizontalpodautoscaler.autoscaling/php-apache autoscaled
+root@localhost:~# kubect get hpa
+kubect: command not found
+root@localhost:~# kubectl get hpa
+NAME         REFERENCE               TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   cpu: 0%/50%   1         10        1          17s
+```
+
+Now, we generate some loads on the `deployment` and see what will be happened.
+```console
+root@localhost:~# kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!
+```
+
+```console
+root@localhost:~# kubectl get po,deploy,svc,hpa
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/load-generator                1/1     Running   0          9s
+pod/php-apache-678865dd57-rlgqw   1/1     Running   0          13m
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/php-apache   1/1     1            1           13m
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   14d
+service/php-apache   ClusterIP   10.96.250.6   <none>        80/TCP    13m
+
+NAME                                             REFERENCE               TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/php-apache   Deployment/php-apache   cpu: 0%/50%   1         10        1          6m45s
+```
+
+```console
+root@localhost:~# kubectl get po,deploy,svc,hpa
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/load-generator                1/1     Running   0          30s
+pod/php-apache-678865dd57-g4gl6   1/1     Running   0          6s
+pod/php-apache-678865dd57-rlgqw   1/1     Running   0          13m
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/php-apache   2/2     2            2           13m
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   14d
+service/php-apache   ClusterIP   10.96.250.6   <none>        80/TCP    13m
+
+NAME                                             REFERENCE               TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/php-apache   Deployment/php-apache   cpu: 61%/50%   1         10        1          7m6s
+```
+
+```console
+root@localhost:~# kubectl get po,deploy,svc,hpa
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/load-generator                1/1     Running   0          99s
+pod/php-apache-678865dd57-g4gl6   1/1     Running   0          75s
+pod/php-apache-678865dd57-gfjpb   1/1     Running   0          15s
+pod/php-apache-678865dd57-gh5fl   1/1     Running   0          60s
+pod/php-apache-678865dd57-hkn4b   1/1     Running   0          60s
+pod/php-apache-678865dd57-k4g55   1/1     Running   0          45s
+pod/php-apache-678865dd57-rlgqw   1/1     Running   0          15m
+pod/php-apache-678865dd57-td5ht   1/1     Running   0          45s
+pod/php-apache-678865dd57-w69s2   1/1     Running   0          15s
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/php-apache   8/8     8            8           15m
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   14d
+service/php-apache   ClusterIP   10.96.250.6   <none>        80/TCP    15m
+
+NAME                                             REFERENCE               TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/php-apache   Deployment/php-apache   cpu: 59%/50%   1         10        6          8m15s
+```
+And when we stop the loads, the replicas start to decreasing
+```
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^Cpod "load-generator" deleted
+pod default/load-generator terminated (Error)
+```
+
+```console
+root@localhost:~# kubectl get po,deploy,svc,hpa
+NAME                              READY   STATUS    RESTARTS   AGE
+pod/php-apache-678865dd57-rlgqw   1/1     Running   0          21m
+
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/php-apache   1/1     1            1           21m
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   14d
+service/php-apache   ClusterIP   10.96.250.6   <none>        80/TCP    21m
+
+NAME                                             REFERENCE               TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/php-apache   Deployment/php-apache   cpu: 0%/50%   1         10        2          14m
+
+```
+
+
 
