@@ -187,14 +187,58 @@ Events:
   Normal   Pulled     46s (x3 over 86s)   kubelet            Container image "registry.k8s.io/goproxy:0.1" already present on machine
 ```
 
+- **Note** As you can see in the part of running `pod` yaml file, there are some option for `livenessProbe`
+- **failureThreshold: 3** which says after 3 failed tests, it can be assumed as a failuer and each test perfomes after `periodSeconds`.
+- **successThreshold: 1** which says only after one success test, it can be assumed as successful pod.
 
+```yaml
+...
+spec:
+  containers:
+  - image: registry.k8s.io/goproxy:0.1
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      successThreshold: 1
+      tcpSocket:
+        port: 3000
+      timeoutSeconds: 1
+...
+```
 
+- **Note** We can see some tolerations added to the `pod` like:
+```yaml
+...
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+...
+```
+These are automatically added by `Kubernetes` and if node get this taint, `pod` will be evicted from this `node` and move to another `node`.
 
+**node.kubernetes.io/not-ready**
+Type: Taint
+Example: node.kubernetes.io/not-ready: "NoExecute"
+Used on: Node
+The Node controller detects whether a Node is ready by monitoring its health and adds or removes this taint accordingly.
+[source](https://kubernetes.io/docs/reference/labels-annotations-taints/#node-kubernetes-io-not-ready)
 
+**node.kubernetes.io/unreachable**
+Type: Taint
+Example: node.kubernetes.io/unreachable: "NoExecute"
+Used on: Node
+The Node controller adds the taint to a Node corresponding to the NodeCondition Ready being Unknown.
+[source](https://kubernetes.io/docs/reference/labels-annotations-taints/#node-kubernetes-io-unreachable)
 
-
-
-
+---
 
 
 
