@@ -128,7 +128,72 @@ Name:             myapp-pod
 ...
 ```
 
+- Declarative:
+Let's create `yaml` file from `dry-run` option:
+```console
+root@localhost:~# kubectl create cm app-cm --from-literal=FIRSTNAME=Piyush --from-literal=NEXT=Sina --dry-run=client -o yaml > day19-cm.yaml
+```
+The `yaml` file would be below:
+```yaml
+apiVersion: v1
+data:
+  FIRSTNAME: Piyush
+  NEXT: Sina
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: app-cm
+```
+---
 
+Sample for `cm`:
+```yaml
+apiVersion: v1
+data:
+  FIRSTNAME: Piyush
+  NEXT: Sina
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: app-cm
+```
+
+Sample for `pod`:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dapi-test-pod
+spec:
+  containers:
+    - name: test-container
+      image: registry.k8s.io/busybox
+      command: [ "/bin/sh", "-c", "env" ]
+      envFrom:
+      - configMapRef:
+          name: app-cm
+  restartPolicy: Never
+```
+
+Let's check:
+```console
+root@localhost:~# kubectl get cm,pod
+NAME                         DATA   AGE
+configmap/app-cm             2      5m53s
+configmap/kube-root-ca.crt   1      16d
+
+NAME                READY   STATUS      RESTARTS   AGE
+pod/dapi-test-pod   0/1     Completed   0          4m15s
+```
+```console
+root@localhost:~# kubectl describe pod dapi-test-pod
+Name:             dapi-test-pod
+...
+    Environment Variables from:
+      app-cm      ConfigMap  Optional: false
+
+...
+```
 
 
 
