@@ -195,7 +195,7 @@ Name:             dapi-test-pod
 ...
 ```
 
-
+Following this [link](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#define-container-environment-variables-using-secret-data) for get information about `secret`.
 
 
 
