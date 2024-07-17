@@ -48,6 +48,97 @@ root@localhost:~# kubectl exec -it myapp-pod -- sh
 Piyush
 ```
 
+Now, we are going to do it with different ways as mentioned, `configMap`.
+- Imperative:
+```console
+root@localhost:~# kubectl create cm app-cm --from-literal=FIRSTNAME=Piyush --from-literal=NEXT=Sina
+configmap/app-cm created
+root@localhost:~# kubectl get cm
+NAME               DATA   AGE
+app-cm             2      5s
+kube-root-ca.crt   1      16d
+root@localhost:~# kubectl describe cm app-cm
+Name:         app-cm
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+FIRSTNAME:
+----
+Piyush
+NEXT:
+----
+Sina
+
+BinaryData
+====
+
+Events:  <none>
+```
+Then we need to inject to `yaml` file of our `pod`, and define specific block for each environment variable:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app.kubernetes.io/name: MyApp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    env:
+    - name: firstName
+      valueFrom:
+        configMapKeyRef:
+          name: app-cm
+          key: FIRSTNAME
+    - name: next
+      valueFrom:
+        configMapKeyRef:
+          name: app-cm
+          key: NEXT
+    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+```
+Let's run and check:
+```console
+root@localhost:~# kubectl apply -f day19-configmap.yaml
+pod/myapp-pod created
+root@localhost:~# kubectl get pod
+NAME        READY   STATUS    RESTARTS   AGE
+myapp-pod   1/1     Running   0          36s
+root@localhost:~# kubectl exec -it myapp-pod -- sh
+/ # echo $firstName
+Piyush
+/ # echo $next
+Sina
+/ # 
+```
+```console
+root@localhost:~# kubectl describe po/myapp-pod
+Name:             myapp-pod
+...
+    Environment:
+      firstName:  <set to the key 'FIRSTNAME' of config map 'app-cm'>  Optional: false
+      next:       <set to the key 'NEXT' of config map 'app-cm'>       Optional: false
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-
+...
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
