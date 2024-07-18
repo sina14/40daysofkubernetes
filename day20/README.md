@@ -19,8 +19,8 @@ Which both side, client and server, use one key to encrypt and decrypt the traff
 2. Asymmetric Encryption:
 There are two key, public and private, that client encrypt the traffic with public key, and the private key which the server only has it, can decrypt the traffic.
  
-- CA is certificate authority to validate if the public key is generated for the right server or domain name, and it can help us to distinguish between the clean connection between client and server and the traffic when man-in-the-middle is behind!
-<br/>
+- CA is certificate authority to validate if the public key is generated for the right server or domain name, and it can help us to distinguish between the clean connection between client and server and the traffic when man-in-the-middle is behind!<br/>
+
 For example:
 <br/>
 - Website Identity from our browser:<br/>
