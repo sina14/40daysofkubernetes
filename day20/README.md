@@ -23,13 +23,13 @@ There are two key, public and private, that client encrypt the traffic with publ
 <br/>
 For example:
 <br/>
-- Website Identity from our browser:
-<br/>
+- Website Identity from our browser:<br/>
+
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xbvbxui0kkjaxf3af68y.png)
-<br/>
-- The CA:
-<br/>
+
+- The CA:<br/>
+
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/df01cw326celszpoh5rj.png)
-<br/>
+
 
 
