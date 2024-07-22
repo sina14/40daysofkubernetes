@@ -21,3 +21,10 @@
 #### [Day 14](https://github.com/sina14/40daysofkubernetes/tree/main/day14) - Taints and Tolerations in Kubernetes
 #### [Day 15](https://github.com/sina14/40daysofkubernetes/tree/main/day15) - Kubernetes Node Affinity Explained
 #### [Day 16](https://github.com/sina14/40daysofkubernetes/tree/main/day16) - Kubernetes Requests and Limits
+
+#### [Day 17](https://github.com/sina14/40daysofkubernetes/tree/main/day17) - Kubernetes Autoscaling | HPA Vs VPA
+#### [Day 18](https://github.com/sina14/40daysofkubernetes/tree/main/day18) - Kubernetes Probes Explained | Liveness vs Readiness vs Startup Probes
+#### [Day 19](https://github.com/sina14/40daysofkubernetes/tree/main/day19) - Kubernetes configmap and secret
+#### [Day 20](https://github.com/sina14/40daysofkubernetes/tree/main/day20) - SSL/TLS Explained Simply
+
+#### [Day 21](https://github.com/sina14/40daysofkubernetes/tree/main/day21) - Manage TLS Certificates In a Kubernetes Cluster - Create Certificate Signing Request
