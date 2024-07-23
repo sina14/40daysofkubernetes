@@ -56,3 +56,77 @@ contexts:
 A **WebHook** is an HTTP callback: an HTTP POST that occurs when something happens; a simple event-notification via HTTP POST. A web application implementing WebHooks will POST a message to a URL when certain things happen.
 When specified, mode `Webhook` causes Kubernetes to query an outside REST service when determining user privileges.[source](https://kubernetes.io/docs/reference/access-authn-authz/webhook/)
 
+---
+
+As we are using a `kind` cluster, we cannot ssh to our node, because it's an docker container. So we can handle it with `exec` command.
+
+```console
+root@localhost:~# docker ps | grep control-plane
+f791fa85c269   kindest/node:v1.30.0   "/usr/local/bin/entr…"   3 weeks ago    Up 11 hours   0.0.0.0:30001->30001/tcp, 127.0.0.1:39283->6443/tcp                                            lucky-luke-control-plane
+root@localhost:~# docker exec -it lucky-luke-control-plane bash
+root@lucky-luke-control-plane:/# cd /etc/kubernetes/manifests/
+root@lucky-luke-control-plane:/etc/kubernetes/manifests# ls -l
+total 16
+-rw------- 1 root root 2418 Jul 23 06:26 etcd.yaml
+-rw------- 1 root root 3896 Jul 23 06:26 kube-apiserver.yaml
+-rw------- 1 root root 3434 Jul 23 06:26 kube-controller-manager.yaml
+-rw------- 1 root root 1463 Jul 23 06:26 kube-scheduler.yaml
+```
+
+If we see the `kube-apiserver.yaml` file, we can see many options that have passed to starting the service command such as:
+```yaml
+...
+spec:
+  containers:
+  - command:
+    - kube-apiserver
+    - --advertise-address=172.19.0.4
+    - --allow-privileged=true
+    - --authorization-mode=Node,RBAC
+...
+```
+The `authorization-mode` is `Node` and `RBAC`.
+**Note** Defaults to `AlwaysAllow` if `--authorization-config` is not used. 
+[Here](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options) for more info about Other options.
+
+---
+
+The default directory of all certificate which is used by `kube-apiserver` is:
+```console
+root@lucky-luke-control-plane:~# ls -l /etc/kubernetes/pki/
+total 60
+-rw-r--r-- 1 root root 1123 Jul  1 16:16 apiserver-etcd-client.crt
+-rw------- 1 root root 1675 Jul  1 16:16 apiserver-etcd-client.key
+-rw-r--r-- 1 root root 1176 Jul  1 16:16 apiserver-kubelet-client.crt
+-rw------- 1 root root 1679 Jul  1 16:16 apiserver-kubelet-client.key
+-rw-r--r-- 1 root root 1334 Jul 23 06:26 apiserver.crt
+-rw------- 1 root root 1675 Jul 23 06:26 apiserver.key
+-rw-r--r-- 1 root root 1107 Jul  1 16:16 ca.crt
+-rw------- 1 root root 1675 Jul  1 16:16 ca.key
+drwxr-xr-x 2 root root 4096 Jul  1 16:16 etcd
+-rw-r--r-- 1 root root 1123 Jul  1 16:16 front-proxy-ca.crt
+-rw------- 1 root root 1679 Jul  1 16:16 front-proxy-ca.key
+-rw-r--r-- 1 root root 1119 Jul  1 16:16 front-proxy-client.crt
+-rw------- 1 root root 1675 Jul  1 16:16 front-proxy-client.key
+-rw------- 1 root root 1679 Jul  1 16:16 sa.key
+-rw------- 1 root root  451 Jul  1 16:16 sa.pub
+```
+
+There are multiple pair of certificates and key for apiserver, because sometimes it acts as a server and sometimes it acts like a client.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
