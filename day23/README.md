@@ -180,6 +180,34 @@ root@localhost:~# kubectl auth whoami
 ATTRIBUTE   VALUE
 Username    adam
 Groups      [system:authenticated]
+root@localhost:~# kubectl config view
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: DATA+OMITTED
+    server: https://127.0.0.1:39283
+  name: kind-lucky-luke
+contexts:
+- context:
+    cluster: kind-lucky-luke
+    user: adam
+  name: adam
+- context:
+    cluster: kind-lucky-luke
+    user: kind-lucky-luke
+  name: kind-lucky-luke
+current-context: adam
+kind: Config
+preferences: {}
+users:
+- name: adam
+  user:
+    client-certificate: /root/adam.crt
+    client-key: /root/adam.key
+- name: kind-lucky-luke
+  user:
+    client-certificate-data: DATA+OMITTED
+    client-key-data: DATA+OMITTED
 
 ```
 
@@ -190,6 +218,37 @@ NAME          READY   STATUS    RESTARTS   AGE
 nginx-pod-3   1/1     Running   0          25s
 root@localhost:~# kubectl get nodes
 Error from server (Forbidden): nodes is forbidden: User "adam" cannot list resource "nodes" in API group "" at the cluster scope
+```
+
+check with `curl` and the keys
+```console
+root@localhost:~# curl https://127.0.0.1:39283/api/v1/namespaces/default/pods --key adam.key --cert adam.crt --cacert ca.crt
+{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "3003522"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "nginx-pod-3",
+        "namespace": "default",
+...
+            "lastState": {},
+            "ready": true,
+            "restartCount": 0,
+            "image": "docker.io/library/nginx:latest",
+            "imageID": "docker.io/library/nginx@sha256:6af79ae5de407283dcea8b00d5c37ace95441fd58a8b1d2aa1ed93f5511bb18c",
+            "containerID": "containerd://5ef66bb91400fd10cc3d9b9f0bfb08fd4d640df0f2c2834ec6598eb54edd4efb",
+            "started": true
+          }
+        ],
+        "qosClass": "BestEffort"
+      }
+    }
+  ]
+}
 ```
 
 Let's check the validity of certification expired date of adam:
@@ -204,13 +263,38 @@ We extend it for a year again with `openssl`
 root@localhost:~# openssl x509 -req -in adam.csr  -CA ca.crt -CAkey ca.key -CAcreateserial -out adam.crt -days 365
 Certificate request self-signature ok
 subject=CN = adam
+root@localhost:~# openssl x509 -noout -dates -in adam.crt
+notBefore=Jul 24 17:20:31 2024 GMT
+notAfter=Jul 24 17:20:31 2025 GMT
+
 ```
 
+New user instruction:
+[source](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/)
+```
+1. openssl genrsa -out krishna.key 2048
+2. openssl req -new -key krishna.key -out krishna.csr -subj "/CN=krishna"
+3. change name, requests expired date in csr.yaml
+4. cat krishna.csr | base64 >>> request
+5. apply the file with kubectl
+6. kubectl approve krishna
+7. we have the role
+8. we change the rolebinding and apply it
+9. check can-i get pod as krishna
+10. create crt file for krishna with certificate part of csr file and decode base64 and remove the new_line character
+12. kubectl config set-credentials krishna with client-key, client-certificate
+13. kubectl config set-context krishna with cluster name and user
+14. kubectl config use-context krishan
+15. check the premission
 
+```
 
+- Define Role and RoleBinding, Imperative way
+```
+kubectl create role developer --verb=create --verb=get --verb=list --verb=update --verb=delete --resource=pods
 
-
-
+kubectl create rolebinding developer-binding-myuser --role=developer --user=myuser
+```
 
 
 
