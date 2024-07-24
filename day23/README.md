@@ -156,9 +156,55 @@ yes
 ```
 
 Then we are going to log in as user `adam` and get pods:
+```console
+root@localhost:~# kubectl config set-credentials adam --client-key=adam.key --client-certificate=adam.crt
+User "adam" set.
+root@localhost:~# kubectl config set-context adam --cluster=kind-lucky-luke --user=adam
+Context "adam" created.
+root@localhost:~# kubectl config get-contexts
+CURRENT   NAME              CLUSTER           AUTHINFO          NAMESPACE
+          adam              kind-lucky-luke   adam
+*         kind-lucky-luke   kind-lucky-luke   kind-lucky-luke
 
+```
 
+Switch to new context, `adam`
+```console
+root@localhost:~# kubectl config use-context adam
+Switched to context "adam".
+root@localhost:~# kubectl config get-contexts
+CURRENT   NAME              CLUSTER           AUTHINFO          NAMESPACE
+*         adam              kind-lucky-luke   adam
+          kind-lucky-luke   kind-lucky-luke   kind-lucky-luke
+root@localhost:~# kubectl auth whoami
+ATTRIBUTE   VALUE
+Username    adam
+Groups      [system:authenticated]
 
+```
+
+Check the permissions:
+```console
+root@localhost:~# kubectl get pods
+NAME          READY   STATUS    RESTARTS   AGE
+nginx-pod-3   1/1     Running   0          25s
+root@localhost:~# kubectl get nodes
+Error from server (Forbidden): nodes is forbidden: User "adam" cannot list resource "nodes" in API group "" at the cluster scope
+```
+
+Let's check the validity of certification expired date of adam:
+```console
+root@localhost:~# openssl x509 -noout -dates -in adam.crt
+notBefore=Jul 22 17:38:02 2024 GMT
+notAfter=Aug  1 17:38:02 2024 GMT
+```
+
+We extend it for a year again with `openssl`
+```console
+root@localhost:~# openssl x509 -req -in adam.csr  -CA ca.crt -CAkey ca.key -CAcreateserial -out adam.crt -days 365
+Certificate request self-signature ok
+subject=CN = adam
+```
 
 
 
