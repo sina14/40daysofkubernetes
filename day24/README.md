@@ -10,7 +10,9 @@ In this section, we continue to `RBAC` in `kubernetes`, `clusterrole` and `clust
 
 Resources such as `namespace` and `node`, and permissions such as list, watch and get nodes are `cluster-scoped` in `kubernetes`.
 
-> Cluster-scoped resources are Kubernetes resources that are not namespaced. Cluster-scoped resources may be part of the Kubernetes cluster configuration or may be part of one or more applications.[source](https://docs.kasten.io/latest/usage/clusterscoped.html#cluster-scoped-resources)
+> Cluster-scoped resources are Kubernetes resources that are not namespaced. Cluster-scoped resources may be part of the Kubernetes cluster configuration or may be part of one or more applications.
+
+[source](https://docs.kasten.io/latest/usage/clusterscoped.html#cluster-scoped-resources)
 ---
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/8wiaknw10x2u32hf46iw.png)
@@ -85,4 +87,110 @@ csinodes                                         storage.k8s.io/v1              
 storageclasses                      sc           storage.k8s.io/v1                 false        StorageClass
 volumeattachments                                storage.k8s.io/v1                 false        VolumeAttachment
 ```
+
+#### Demo
+
+Let's check if our user have access to cluster-scoped resources or not:
+```console
+root@localhost:~# kubectl auth can-i get nodes --as adam
+Warning: resource 'nodes' is not namespace scoped
+
+no
+
+```
+
+- With the help of commands we can see an example, the verbs, the resources and so on:
+```console
+root@localhost:~# kubectl create clusterrole --help
+Create a cluster role.
+
+Examples:
+  # Create a cluster role named "pod-reader" that allows user to perform "get", "watch" and "list" on pods
+  kubectl create clusterrole pod-reader --verb=get,list,watch --resource=pods
+
+  # Create a cluster role named "pod-reader" with ResourceName specified
+  kubectl create clusterrole pod-reader --verb=get --resource=pods --resource-name=readablepod
+--resource-name=anotherpod
+
+  # Create a cluster role named "foo" with API Group specified
+  kubectl create clusterrole foo --verb=get,list,watch --resource=rs.apps
+
+  # Create a cluster role named "foo" with SubResource specified
+  kubectl create clusterrole foo --verb=get,list,watch --resource=pods,pods/status
+
+  # Create a cluster role name "foo" with NonResourceURL specified
+  kubectl create clusterrole "foo" --verb=get --non-resource-url=/logs/*
+
+  # Create a cluster role name "monitoring" with AggregationRule specified
+  kubectl create clusterrole monitoring --aggregation-rule="rbac.example.com/aggregate-to-monitoring=true"
+...
+```
+
+- Create `clusterrole`:
+```console
+root@localhost:~# kubectl create clusterrole node-reader --verb=get,list,watch --resource=node
+clusterrole.rbac.authorization.k8s.io/node-reader created
+root@localhost:~# kubectl describe clusterrole node-reader
+Name:         node-reader
+Labels:       <none>
+Annotations:  <none>
+PolicyRule:
+  Resources  Non-Resource URLs  Resource Names  Verbs
+  ---------  -----------------  --------------  -----
+  nodes      []                 []              [get list watch]
+
+```
+The `Resource Names` is blank and it means all the resources.
+
+- Attach the `clusterrole` to a user/group, so we need `clusterrolebinding`:
+```console
+root@localhost:~# kubectl create clusterrolebinding node-reader-binding --clusterrole=node-reader --user=adam
+clusterrolebinding.rbac.authorization.k8s.io/node-reader-binding created
+root@localhost:~# kubectl describe clusterrolebinding node-reader-binding
+Name:         node-reader-binding
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  node-reader
+Subjects:
+  Kind  Name  Namespace
+  ----  ----  ---------
+  User  adam
+root@localhost:~# kubectl auth can-i get nodes --as adam
+Warning: resource 'nodes' is not namespace scoped
+
+yes
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
