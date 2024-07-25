@@ -140,7 +140,7 @@ PolicyRule:
   nodes      []                 []              [get list watch]
 
 ```
-The `Resource Names` is blank and it means all the resources.
+The `Resource Names` is blank and it means all the resources of nodes.
 
 - Attach the `clusterrole` to a user/group, so we need `clusterrolebinding`:
 ```console
