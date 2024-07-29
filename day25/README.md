@@ -100,5 +100,87 @@ namespace:  7 bytes
 
 ```
 
+#### Add ImagePullSecrets to a service account
+
+Let's say we have a private image repository and need to have a `service account` to pull images from it. That's where we use `ImagePullSecret` to authentication and authorization for our private registry.
+
+- Sample [source](https://kubernetes.io/docs/concepts/containers/images/#referring-to-an-imagepullsecrets-on-a-pod)
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo
+  namespace: awesomeapps
+spec:
+  containers:
+    - name: foo
+      image: janedoe/awesomeapp:v1
+  imagePullSecrets:
+    - name: myregistrykey
+```
+>This needs to be done for each pod that is using a private registry.
+
+#### Creating a Secret with a Docker config
+[source](https://kubernetes.io/docs/concepts/containers/images/#creating-a-secret-with-a-docker-config)
+```
+kubectl create secret docker-registry <name> \
+  --docker-server=DOCKER_REGISTRY_SERVER \
+  --docker-username=DOCKER_USER \
+  --docker-password=DOCKER_PASSWORD \
+  --docker-email=DOCKER_EMAIL
+```
+
+>After you made those changes, the edited ServiceAccount looks something like this:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: 2021-07-07T22:02:39Z
+  name: default
+  namespace: default
+  uid: 052fb0f4-3d50-11e5-b066-42010af0d7b6
+imagePullSecrets:
+  - name: myregistrykey
+```
+
+#### Check the permission of the service account
+
+```console
+root@localhost:~# kubectl get pods --as build-sa
+Error from server (Forbidden): pods is forbidden: User "build-sa" cannot list resource "pods" in API group "" in the namespace "default"
+root@localhost:~# kubectl auth can-i get pods --as build-sa
+no
+```
+
+So we need to have `role` and `rolebinding` for that.
+```console
+root@localhost:~# kubectl create role build-role --verb=list,get,watch --resource=pod
+role.rbac.authorization.k8s.io/build-role created
+root@localhost:~# kubectl create rolebinding build-rolebinding --role=build-role --user=build-sa
+rolebinding.rbac.authorization.k8s.io/build-rolebinding created
+root@localhost:~# kubectl get role,rolebinding
+NAME                                        CREATED AT
+role.rbac.authorization.k8s.io/build-role   2024-07-29T15:09:45Z
+role.rbac.authorization.k8s.io/developer    2024-07-28T19:20:16Z
+role.rbac.authorization.k8s.io/pod-reader   2024-07-24T16:27:15Z
+
+NAME                                                      ROLE              AGE
+rolebinding.rbac.authorization.k8s.io/build-rolebinding   Role/build-role   12s
+rolebinding.rbac.authorization.k8s.io/developer-role      Role/developer    19h
+rolebinding.rbac.authorization.k8s.io/read-pods           Role/pod-reader   4d22h
+```
+
+Let's check the permission
+```console
+root@localhost:~# kubectl auth can-i get pods --as build-sa
+yes
+root@localhost:~# kubectl get pods --as build-sa
+NAME          READY   STATUS    RESTARTS   AGE
+nginx-pod-3   1/1     Running   0          4d22h
+```
+
+
+
+
 
 
