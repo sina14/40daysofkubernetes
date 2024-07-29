@@ -142,6 +142,7 @@ metadata:
 imagePullSecrets:
   - name: myregistrykey
 ```
+---
 
 #### Check the permission of the service account
 
@@ -179,8 +180,31 @@ NAME          READY   STATUS    RESTARTS   AGE
 nginx-pod-3   1/1     Running   0          4d22h
 ```
 
+#### Check service account data in pod details
+```console
+root@localhost:~# kubectl describe pod nginx-pod-3
+Name:             nginx-pod-3
+Namespace:        default
+Priority:         0
+Service Account:  default
 
+...
 
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-gksff (ro)
+
+...
+```
+
+```console
+root@localhost:~# kubectl exec -it nginx-pod-3 -- bash
+root@nginx-pod-3:/# ls -lh /var/run/secrets/kubernetes.io/serviceaccount/
+total 0
+lrwxrwxrwx 1 root root 13 Jul 24 17:04 ca.crt -> ..data/ca.crt
+lrwxrwxrwx 1 root root 16 Jul 24 17:04 namespace -> ..data/namespace
+lrwxrwxrwx 1 root root 12 Jul 24 17:04 token -> ..data/token
+
+```
 
 
 
