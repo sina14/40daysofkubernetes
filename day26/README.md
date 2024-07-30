@@ -98,6 +98,149 @@ It won't start because we don't have any `CNI`, so we are going to install a `CN
 [source](https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/)
 
 Let's choose the last one, [Weave Net](https://kubernetes.io/docs/tasks/administer-cluster/network-policy-provider/weave-network-policy/).
+Installing with following [this](https://kubernetes.io/docs/tasks/administer-cluster/network-policy-provider/weave-network-policy/#install-the-weave-net-addon) instruction and [here](https://github.com/weaveworks/weave/blob/master/site/kubernetes/kube-addon.md#-installation).
+```console
+root@localhost:~# kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+serviceaccount/weave-net created
+clusterrole.rbac.authorization.k8s.io/weave-net created
+clusterrolebinding.rbac.authorization.k8s.io/weave-net created
+role.rbac.authorization.k8s.io/weave-net created
+rolebinding.rbac.authorization.k8s.io/weave-net created
+daemonset.apps/weave-net created
+```
+
+After installation of `CNI`, let's check the cluster state:
+```console
+root@localhost:~# kubectl get nodes
+NAME                         STATUS   ROLES           AGE   VERSION
+jolly-jumper-control-plane   Ready    control-plane   15m   v1.30.0
+jolly-jumper-worker          Ready    <none>          15m   v1.30.0
+jolly-jumper-worker2         Ready    <none>          15m   v1.30.0
+root@localhost:~# kubectl get ds -A
+NAMESPACE     NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   kube-proxy   3         3         3       3            3           kubernetes.io/os=linux   15m
+kube-system   weave-net    3         3         3       3            3           <none>                   99s
+root@localhost:~# kubectl get pods -A
+NAMESPACE            NAME                                                 READY   STATUS    RESTARTS      AGE
+kube-system          coredns-7db6d8ff4d-tdkbc                             1/1     Running   0             15m
+kube-system          coredns-7db6d8ff4d-tqpz9                             1/1     Running   0             15m
+kube-system          etcd-jolly-jumper-control-plane                      1/1     Running   0             15m
+kube-system          kube-apiserver-jolly-jumper-control-plane            1/1     Running   0             15m
+kube-system          kube-controller-manager-jolly-jumper-control-plane   1/1     Running   0             15m
+kube-system          kube-proxy-7s2tz                                     1/1     Running   0             15m
+kube-system          kube-proxy-8bg22                                     1/1     Running   0             15m
+kube-system          kube-proxy-s7m5s                                     1/1     Running   0             15m
+kube-system          kube-scheduler-jolly-jumper-control-plane            1/1     Running   0             15m
+kube-system          weave-net-2cnqf                                      2/2     Running   1 (94s ago)   108s
+kube-system          weave-net-lx2g4                                      2/2     Running   1 (93s ago)   108s
+kube-system          weave-net-z8q2q                                      2/2     Running   1 (88s ago)   108s
+local-path-storage   local-path-provisioner-988d74bc-56h58                1/1     Running   0             15m
+```
+
+Our `CNI` is a `deamon-set`, also has a side-car container and both are up & running.
+Now, we are going to implement a sample scenario.
+
+
+#### Demo
+The multiple resource in one manifest seprated by `---`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend
+  labels:
+    role: frontend
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - name: http
+      containerPort: 80
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    role: frontend
+spec:
+  selector:
+    role: frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend
+  labels:
+    role: backend
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+    - name: http
+      containerPort: 80
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    role: backend
+spec:
+  selector:
+    role: backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  labels:
+    name: mysql
+spec:
+  selector:
+    name: mysql
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql
+  labels:
+    name: mysql
+spec:
+  containers:
+    - name: mysql
+      image: mysql:latest
+      env:
+        - name: "MYSQL_USER"
+          value: "mysql"
+        - name: "MYSQL_PASSWORD"
+          value: "mysql"
+        - name: "MYSQL_DATABASE"
+          value: "testdb"
+        - name: "MYSQL_ROOT_PASSWORD"
+          value: "verysecure"
+      ports:
+        - name: http
+          containerPort: 3306
+          protocol: TCP
+```
 
 
 
