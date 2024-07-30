@@ -88,12 +88,12 @@ jolly-jumper-worker2         NotReady   <none>          34s   v1.30.0
 It won't start because we don't have any `CNI`, so we are going to install a `CNI` plugin.
 
 >Make sure you've configured a network provider with network policy support. There are a number of network providers that support NetworkPolicy, including:
-- Antrea
-- Calico
-- Cilium
-- Kube-router
-- Romana
-- Weave Net
+>- Antrea
+>- Calico
+>- Cilium
+>- Kube-router
+>- Romana
+>- Weave Net
 
 [source](https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/)
 
@@ -241,10 +241,157 @@ spec:
           containerPort: 3306
           protocol: TCP
 ```
+[source](https://github.com/piyushsachdeva/CKA-2024/tree/main/Resources/Day26#application-manifest)
 
+```console
+root@localhost:~# kubectl apply -f day26-manifest.yaml
+pod/frontend created
+service/frontend created
+pod/backend created
+service/backend created
+service/db created
+pod/mysql created
+root@localhost:~# kubectl get pods
+NAME       READY   STATUS    RESTARTS   AGE
+backend    1/1     Running   0          38s
+frontend   1/1     Running   0          38s
+mysql      1/1     Running   0          37s
+root@localhost:~# kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+backend      ClusterIP   10.96.37.184    <none>        80/TCP     69s
+db           ClusterIP   10.96.212.199   <none>        3306/TCP   69s
+frontend     ClusterIP   10.96.94.82     <none>        80/TCP     69s
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    33m
 
+```
 
+- Test communication from `frontend` to `backend` and `db`
 
+```console
+root@localhost:~# kubectl exec -it frontend -- bash
+root@frontend:/# curl -I backend:80
+HTTP/1.1 200 OK
+Server: nginx/1.27.0
+Date: Tue, 30 Jul 2024 17:35:16 GMT
+Content-Type: text/html
+Content-Length: 615
+Last-Modified: Tue, 28 May 2024 13:22:30 GMT
+Connection: keep-alive
+ETag: "6655da96-267"
+Accept-Ranges: bytes
+
+root@frontend:/# apt update && apt install telnet -y
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8788 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [13.8 kB]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [169 kB]
+Fetched 9225 kB in 2s (5693 kB/s)
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+All packages are up to date.
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  inetutils-telnet netbase
+The following NEW packages will be installed:
+  inetutils-telnet netbase telnet
+0 upgraded, 3 newly installed, 0 to remove and 0 not upgraded.
+Need to get 174 kB of archives.
+After this operation, 353 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main amd64 netbase all 6.4 [12.8 kB]
+Get:2 http://deb.debian.org/debian bookworm/main amd64 inetutils-telnet amd64 2:2.4-2+deb12u1 [120 kB]
+Get:3 http://deb.debian.org/debian bookworm/main amd64 telnet all 0.17+2.4-2+deb12u1 [41.1 kB]
+Fetched 174 kB in 0s (3124 kB/s)
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package netbase.
+(Reading database ... 7581 files and directories currently installed.)
+Preparing to unpack .../archives/netbase_6.4_all.deb ...
+Unpacking netbase (6.4) ...
+Selecting previously unselected package inetutils-telnet.
+Preparing to unpack .../inetutils-telnet_2%3a2.4-2+deb12u1_amd64.deb ...
+Unpacking inetutils-telnet (2:2.4-2+deb12u1) ...
+Selecting previously unselected package telnet.
+Preparing to unpack .../telnet_0.17+2.4-2+deb12u1_all.deb ...
+Unpacking telnet (0.17+2.4-2+deb12u1) ...
+Setting up netbase (6.4) ...
+Setting up inetutils-telnet (2:2.4-2+deb12u1) ...
+update-alternatives: using /usr/bin/inetutils-telnet to provide /usr/bin/telnet (telnet) in auto mode
+update-alternatives: warning: skip creation of /usr/share/man/man1/telnet.1.gz because associated file /usr/share/man/man1/inetutils-telnet.1.gz (of link group telnet) doesn't exist
+Setting up telnet (0.17+2.4-2+deb12u1) ...
+root@frontend:/# telnet db 3306
+Trying 10.96.212.199...
+Connected to db.
+Escape character is '^]'.
+I
+9.0.1    *2x1T▒0dKGQ6:8caching_sha2_passwordxterm-256colorxterm-256color
+!#08S01Got packets out of orderConnection closed by foreign host.
+root@frontend:/#
+exit
+
+```
+
+Next, we're going to create a `NetworkPolicy` object:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql-access
+spec:
+  podSelector:
+    matchLabels:
+      name: mysql
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: "backend"
+    ports:
+      - protocol: TCP
+        port: 3306
+```
+We restricted access to `db` only from `backend` and `frontend` cannot connect to `db`
+
+```console
+root@localhost:~# kubectl get pods --show-labels
+NAME       READY   STATUS    RESTARTS   AGE   LABELS
+backend    1/1     Running   0          30m   role=backend
+frontend   1/1     Running   0          30m   role=frontend
+mysql      1/1     Running   0          30m   name=mysql
+root@localhost:~# vim day26-network-policy.yaml
+root@localhost:~# kubectl apply -f day26-network-policy.yaml
+networkpolicy.networking.k8s.io/mysql-access created
+root@localhost:~# kubectl get np
+error: the server doesn't have a resource type "np"
+root@localhost:~# kubectl get networkpolicy
+NAME           POD-SELECTOR   AGE
+mysql-access   name=mysql     15s
+root@localhost:~# kubectl exec -it frontend -- bash
+root@frontend:/# telnet db 3306
+Trying 10.96.212.199...
+telnet: Unable to connect to remote host: Connection timed out
+root@frontend:/# exit
+exit
+command terminated with exit code 1
+root@localhost:~# kubectl exec -it backend -- bash
+root@backend:/# telnet db 3306
+Trying 10.96.212.199...
+Connected to db.
+Escape character is '^]'.
+I
+9.0.1
+\C>vJ=9▒To;0%a=D`bcaching_sha2_password
+
+!#08S01Got packets out of orderConnection closed by foreign host.
+root@backend:/# exit
+exit
+root@localhost:~#
+
+```
 
 
 
