@@ -54,6 +54,7 @@ nodes:
 - role: worker
 networking:
   disableDefaultCNI: true
+  #podSubnet: 192.168.0.0/16
 ```
 
 Installing the new cluster with `kind`
