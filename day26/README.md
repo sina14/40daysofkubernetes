@@ -426,7 +426,7 @@ Spec:
 ---
 
 **Note** the `weavenet` and its repository has been archived by the owner on Jun 20, 2024. It is now read-only and out of date.
-Last commit at time I'm writing this is on Nov 23, 2022 by [Eneko Fernández](https://github.com/enekofb).
+Last commit at time I'm writing this article is on Nov 23, 2022 by [Eneko Fernández](https://github.com/enekofb).
 In the video, time 32:08, @piyushsachdeva decided to use another `CNI` named `calico`. But I had not any problem with `weavenet` plugin to continue the scenario.
 
 #### 1. Create a new cluster with `kind`
