@@ -58,6 +58,8 @@ networking:
 
 ```
 
+---
+
 Installing the new cluster with `kind`
 
 ```console
@@ -101,6 +103,16 @@ It won't start because we don't have any `CNI`, so we are going to install a `CN
 
 Let's choose the last one, [Weave Net](https://kubernetes.io/docs/tasks/administer-cluster/network-policy-provider/weave-network-policy/).
 Installing with following [this](https://kubernetes.io/docs/tasks/administer-cluster/network-policy-provider/weave-network-policy/#install-the-weave-net-addon) instruction and [here](https://github.com/weaveworks/weave/blob/master/site/kubernetes/kube-addon.md#-installation).
+
+---
+
+**Note** the `weavenet` and it repository has been archived by the owner on Jun 20, 2024. It is now read-only and out of date.
+Last commit at time I'm writing this is on Nov 23, 2022 by [Eneko Fernández](https://github.com/enekofb) 
+In the video, time 32:08, @piyushsachdeva decided to use another `CNI` named `calico`.
+But I had not any problem with `weavenet` plugin to continue the scenario.
+
+---
+
 ```console
 root@localhost:~# kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
 serviceaccount/weave-net created
@@ -266,6 +278,8 @@ frontend     ClusterIP   10.96.94.82     <none>        80/TCP     69s
 kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    33m
 
 ```
+
+---
 
 - Test communication from `frontend` to `backend` and `db`
 
