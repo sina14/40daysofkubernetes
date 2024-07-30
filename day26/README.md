@@ -55,6 +55,7 @@ nodes:
 networking:
   disableDefaultCNI: true
   #podSubnet: 192.168.0.0/16
+
 ```
 
 Installing the new cluster with `kind`
@@ -366,8 +367,6 @@ mysql      1/1     Running   0          30m   name=mysql
 root@localhost:~# vim day26-network-policy.yaml
 root@localhost:~# kubectl apply -f day26-network-policy.yaml
 networkpolicy.networking.k8s.io/mysql-access created
-root@localhost:~# kubectl get np
-error: the server doesn't have a resource type "np"
 root@localhost:~# kubectl get networkpolicy
 NAME           POD-SELECTOR   AGE
 mysql-access   name=mysql     15s
@@ -393,6 +392,44 @@ exit
 root@localhost:~#
 
 ```
+
+Check the `Network Policy`
+
+```console
+root@localhost:~# kubectl get netpol
+NAME           POD-SELECTOR   AGE
+mysql-access   name=mysql     6m36s
+root@localhost:~# kubectl describe netpol mysql-access
+Name:         mysql-access
+Namespace:    default
+Created on:   2024-07-30 17:49:28 +0000 UTC
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     name=mysql
+  Allowing ingress traffic:
+    To Port: 3306/TCP
+    From:
+      PodSelector: role=backend
+  Not affecting egress traffic
+  Policy Types: Ingress
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
