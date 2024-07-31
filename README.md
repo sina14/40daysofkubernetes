@@ -1,5 +1,7 @@
 # 40daysofkubernetes
+
 [Youtube Channel](https://www.youtube.com/@TechTutorialswithPiyush) by [Piyush Sachdeva](https://linktr.ee/piyushsachdeva)
+
 ---
 
 #### [Day 01](https://github.com/sina14/40daysofkubernetes/tree/main/day01) - Docker Tutorial For Beginners - Docker Fundamentals
@@ -28,3 +30,9 @@
 #### [Day 20](https://github.com/sina14/40daysofkubernetes/tree/main/day20) - SSL/TLS Explained Simply
 
 #### [Day 21](https://github.com/sina14/40daysofkubernetes/tree/main/day21) - Manage TLS Certificates In a Kubernetes Cluster - Create Certificate Signing Request
+#### [Day 22](https://github.com/sina14/40daysofkubernetes/tree/main/day22) - Kubernetes Authentication and Authorization Simply Explained
+#### [Day 23](https://github.com/sina14/40daysofkubernetes/tree/main/day23) - Kubernetes RBAC Explained - Role Based Access Control Kubernetes
+#### [Day 24](https://github.com/sina14/40daysofkubernetes/tree/main/day24) - Kubernetes RBAC Continued - Clusterrole and Clusterrole Binding
+
+#### [Day 25](https://github.com/sina14/40daysofkubernetes/tree/main/day25) - Kubernetes Service Account - RBAC Continued
+#### [Day 26](https://github.com/sina14/40daysofkubernetes/tree/main/day26) - Kubernetes Network Policies Explained
