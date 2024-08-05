@@ -43,14 +43,58 @@ root@redis-pod:/data# mount | grep redis
 If the `pod` killed or restarted, the data is still persist, but if the `pod` deleted, the data will be lost.
 
 ---
-(DIFINITIONS)
-- **Volume**: 
-- PV
-- PVC
-ACCESS MODE
-RECLAIM POLICY
-StorageClass provisioner
-...
+At first we need some definitions to have better understanding the concepts.
+[source](https://blog.mayadata.io/understanding-persistent-volumes-and-pvcs-in-kubernetes)
+>- **Volume**: In `Kubernetes`, `volume` abstractions are used to provide an API that abstracts the physical implementation of `storage` from how it is consumed by application resources.
+>Kubernetes supports two major types of Volumes:
+    - Ephemeral Volumes - These are used for applications that need storage but do not need to access the data after a restart:
+        - emptyDir
+        - Secrets, ConfigMaps and the downwardAPI
+        - CSI (Container Storage Interface) Ephemeral Volumes
+        - Generic Ephemeral Volumes
+    - Persistent Volumes - This is an API object that represents an abstract implementation of physical storage to be used by PODs, but they last beyond a POD’s lifetime.
+
+> - **Persistent Storage**: Once a CSI plugin has been set up and is running in Kubernetes, resources and users can consume volumes using the Kubernetes Storage API objects: `Persistent Volumes`, `Persistent Volume Claims` and `Storage Classes`.
+
+    - **Persistent Volumes (PV)**: is a piece of `storage` available to the `cluster`. The `PV` exposes object, file and block storage systems by capturing the details of its implementation protocol, be it `iSCSI` (SCSI over Internet), `NFS` or any storage systems offered by specific vendors and cloud providers. The `Persistent Volume` has its lifecycle independent of any `POD` consuming it.
+    - **Persistent Volume Claims (PVC)**: When a user requests for `PV` storage, they use a `Persistent Volume Claim` as a `Kubernetes` object that requests specific storage requirements such as `access modes` and size.
+
+> - **The Lifecycle of `PV`s and `PVC`s**:
+    1. Provisioning
+    2. Binding
+    3. Using
+    4. Reclaiming
+
+> - **Reclaim Policy**:
+    1. Retain
+    2. Delete
+    3. Recycle
+
+> Some of the most popular CSI Plugins for Kubernetes include:
+    - AWS Elastic Block Storage 
+    - Azure disk
+    - BeeGFS
+    - CephFS
+    - Dell EMC PowerMax
+    - GCE Persistent Disk
+    - Google Cloud Filestore
+    - GlusterFS
+    - Huawei Storage CSI
+    - HyperV CSI
+    - IBM Block Storage
+    - OpenEBS
+    - Portworx
+    - Pure Storage CSI
+The complete list is [here](https://kubernetes-csi.github.io/docs/drivers.html)
+
+
+> - **Access Mode**:
+    - ReadWriteOnce - the volume can be mounted as read-write by a single node. 
+    - ReadOnlyMany - the volume can be mounted as read-only by many nodes.
+    - ReadWriteMany - the volume can be mounted as read-write by many nodes.
+    - ReadWriteOncePod - the volume can be mounted as read-write by a single Pod.
+[source](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes)
+
 
 ---
 
