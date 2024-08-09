@@ -151,8 +151,7 @@ data:
 
 ```
 
-
-
+If you have no error and your `coredns` doesn't come up, we can look at the `CNI` at first because it can be the first dependency for our `coredns` service.
 
 
 
