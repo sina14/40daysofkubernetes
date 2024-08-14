@@ -228,9 +228,14 @@ kubectl uncordon <node-to-uncordon>
 
 ```
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ksjiqr3t2039v8vljiuc.png)
+### Summary
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/l5maqg7po4wktt6rgv4h.png)
 
 (Photo from the video)
+
+
+
 
 
 
