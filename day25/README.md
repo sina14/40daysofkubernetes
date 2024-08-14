@@ -1,246 +1,210 @@
-## Day 34/40
-# Step-By-Step Guide To Upgrade a Multi Node Kubernetes Cluster With Kubeadm
-[Video Link](https://www.youtube.com/watch?v=NtX75Ze47EU)
+## Day 25/40
+# Kubernetes Service Account - RBAC Continued
+[Video Link](https://www.youtube.com/watch?v=k2iCq7IlMKM)
 @piyushsachdeva 
 [Git Repository](https://github.com/piyushsachdeva/CKA-2024/)
 [My Git Repo](https://github.com/sina14/40daysofkubernetes)
 
 
-In this section, the `kubernetes` cluster wil be update with `kubeadm`. 
+In this section, we are looking at `service account` 
+
+#### What are service accounts?
+>A `service account` is a type of non-human account that, in `Kubernetes`, provides a distinct identity in a `Kubernetes` cluster. Application Pods, system components, and entities inside and outside the `cluster` can use a specific `ServiceAccount`'s credentials to identify as that `ServiceAccount`. This identity is useful in various situations, including authenticating to the API server or implementing identity-based security policies.
+[source](https://kubernetes.io/docs/concepts/security/service-accounts/#what-are-service-accounts)
 
 
-Let's assume we have 1 controller-plane with 3 worker nodes, and one is failed for a reason.
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/345zt6zp5i39fbznd57s.png)
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/nqqegd01m8jzip6u86xp.png)
 
 (Photo from the video)
 
-```
-node worker1 drain
-```
-then
-- `workloads` would be evicted.
-- `node` is `cordon` and unschedulable.
-- The `nginx` pod will schedule in other `node` because it's controlled by `deployment`
-- The `mysql` pod and its data and configurations is gone.
+>When you create a cluster, `Kubernetes` automatically creates a `ServiceAccount` object named `default` for every namespace in your cluster.
+[source](https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts)
 
+```console
+root@localhost:~# kubectl get sa
+NAME      SECRETS   AGE
+default   0         27d
+root@localhost:~# kubectl describe sa default
+Name:                default
+Namespace:           default
+Labels:              <none>
+Annotations:         <none>
+Image pull secrets:  <none>
+Mountable secrets:   <none>
+Tokens:              <none>
+Events:              <none>
+root@localhost:~# kubectl get sa default -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: "2024-07-01T16:17:24Z"
+  name: default
+  namespace: default
+  resourceVersion: "392"
+  uid: 4c64b284-e8c3-4e70-a67e-cb7c0d5a379e
+
+```
  
-If we replace or resolve the issues the failed `node`, we need to `uncordon` it to make it shcedulable and ready again.
-It will accept new `workload` but not current `workload`. 
+#### Create a service account
 
+```console
+root@localhost:~# kubectl create sa build-sa
+serviceaccount/build-sa created
+root@localhost:~# kubectl describe sa build-sa
+Name:                build-sa
+Namespace:           default
+Labels:              <none>
+Annotations:         <none>
+Image pull secrets:  <none>
+Mountable secrets:   <none>
+Tokens:              <none>
+Events:              <none>
+
+```
+
+#### Manually create a long-lived API token for a ServiceAccount
+>If you want to obtain an API token for a ServiceAccount, you create a new Secret with a special annotation, `kubernetes.io/service-account.name`.
+[source](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+
+- Service account token
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: build-robot-secret
+  annotations:
+    kubernetes.io/service-account.name: build-sa
+type: kubernetes.io/service-account-token
+```
+
+```console
+root@localhost:~# kubectl apply -f day25-secret.yaml
+secret/build-robot-secret created
+root@localhost:~# kubectl get secret
+NAME                 TYPE                                  DATA   AGE
+build-robot-secret   kubernetes.io/service-account-token   3      8s
+root@localhost:~# kubectl describe secret build-robot-secret
+Name:         build-robot-secret
+Namespace:    default
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: build-sa
+              kubernetes.io/service-account.uid: 2f2bbf57-41ad-4be1-a4b6-618a093edd45
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6ImEwemh... R4gFq5INlcdOrbF-6yQEe9fz6n2znYoSmX3Qi-BKX3HL8dMbQ2McvXXTNbcr9T8Cnw3Sa2uJA2uoD8QKmzBKjzSSeac8ymUvq0kYgbIIC4ITdtZCA26hD54Hds3i92uoQ245Vfh9miW_YVHtkVgL9tCjrKJRfkEYEfd2H_Eijq-W6HPePUC7m1lvIviYZr1IcCfUDY8jHt8XwIVPs6JwzQnkirRWq-3bylmvNNR1W7FqwwADjv581mmwHSY4KoDpjM0T_a-kJCN8ufLI_m6o12Tw
+ca.crt:     1107 bytes
+namespace:  7 bytes
+
+```
+
+#### Add ImagePullSecrets to a service account
+
+Let's say we have a private image repository and need to have a `service account` to pull images from it. That's where we use `ImagePullSecret` to authentication and authorization for our private registry.
+
+- Sample [source](https://kubernetes.io/docs/concepts/containers/images/#referring-to-an-imagepullsecrets-on-a-pod)
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo
+  namespace: awesomeapps
+spec:
+  containers:
+    - name: foo
+      image: janedoe/awesomeapp:v1
+  imagePullSecrets:
+    - name: myregistrykey
+```
+>This needs to be done for each pod that is using a private registry.
+
+#### Creating a Secret with a Docker config
+[source](https://kubernetes.io/docs/concepts/containers/images/#creating-a-secret-with-a-docker-config)
+```
+kubectl create secret docker-registry <name> \
+  --docker-server=DOCKER_REGISTRY_SERVER \
+  --docker-username=DOCKER_USER \
+  --docker-password=DOCKER_PASSWORD \
+  --docker-email=DOCKER_EMAIL
+```
+
+>After you made those changes, the edited ServiceAccount looks something like this:
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: 2021-07-07T22:02:39Z
+  name: default
+  namespace: default
+  uid: 052fb0f4-3d50-11e5-b066-42010af0d7b6
+imagePullSecrets:
+  - name: myregistrykey
+```
 ---
 
+#### Check the permission of the service account
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/rh1i4j3a6lv9d0nnn6ra.png)
-
-(Photo from the video)
-
-For upgrading we cannot skip the minor version and for upgrading we need to upgrade to one next minor version.
-For example,at first upgrade `1.28.2` to `1.29.3`, then we can upgrade from `1.29.3` to `1.30.2` and so on.
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/eanytvbfdx0nl5l31d14.png)
-
-(Photo from the video)
-
-As a `kubernetes` cluster admin, every month or every couple of months, we need to upgrade the cluster, that's why it's important concept for administration.
-
-**Note** at single time, `kubernetes` only support last 3 minor versions. It means, no new bug fixes or updating the features on that minor version.
-
->Example:
->
->    kube-apiserver is at `1.31`
->    kubelet is supported at `1.31`, `1.30`, `1.29`, and `1.28`
-[source](https://kubernetes.io/releases/version-skew-policy/#kubelet)
-
-
-Official document for upgrading with `kubeadm`, [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
->The upgrade workflow at high level is the following:
->
->    Upgrade a primary control plane node.
->    Upgrade additional control plane nodes.
->    Upgrade worker nodes.
-
-
-Upgrading strategies:
-1. All at once, we have downtime.
-2. Rolling update, one by one.
-3. Blue Green, upgrading new cluster and transfer workloads from old one.
-
----
-
-### Upgrade Master node
-
-1. Changing the package repository 
-[here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/#verifying-if-the-kubernetes-package-repositories-are-used)
-
-
-2. Determine which version to upgrade to
-
-```
-# Find the latest 1.31 version in the list.
-# It should look like 1.31.x-*, where x is the latest patch.
-sudo apt update
-sudo apt-cache madison kubeadm
-```
-[source](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/#determine-which-version-to-upgrade-to)
-
-
-3. Upgrading control plane nodes 
-
-```
-# replace x in 1.31.x-* with the latest patch version
-sudo apt-mark unhold kubeadm && \
-sudo apt-get update && sudo apt-get install -y kubeadm='1.31.x-*' && \
-sudo apt-mark hold kubeadm
-```
-```
-kubeadm version
+```console
+root@localhost:~# kubectl get pods --as build-sa
+Error from server (Forbidden): pods is forbidden: User "build-sa" cannot list resource "pods" in API group "" in the namespace "default"
+root@localhost:~# kubectl auth can-i get pods --as build-sa
+no
 ```
 
+So we need to have `role` and `rolebinding` for that.
+```console
+root@localhost:~# kubectl create role build-role --verb=list,get,watch --resource=pod
+role.rbac.authorization.k8s.io/build-role created
+root@localhost:~# kubectl create rolebinding build-rolebinding --role=build-role --user=build-sa
+rolebinding.rbac.authorization.k8s.io/build-rolebinding created
+root@localhost:~# kubectl get role,rolebinding
+NAME                                        CREATED AT
+role.rbac.authorization.k8s.io/build-role   2024-07-29T15:09:45Z
+role.rbac.authorization.k8s.io/developer    2024-07-28T19:20:16Z
+role.rbac.authorization.k8s.io/pod-reader   2024-07-24T16:27:15Z
 
-4. Check the upgrade plan
-
-```
-kubeadm upgrade plan
-```
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/574cvh0d4f2v2p6w5x6h.png)
-
-(Photo from the video)
-
-```
-kubeadm upgrade apply v1.30.2
-```
-
-5. Drain the node 
-
-```
-kubectl drain <node-to-drain> --ignore-daemonsets
+NAME                                                      ROLE              AGE
+rolebinding.rbac.authorization.k8s.io/build-rolebinding   Role/build-role   12s
+rolebinding.rbac.authorization.k8s.io/developer-role      Role/developer    19h
+rolebinding.rbac.authorization.k8s.io/read-pods           Role/pod-reader   4d22h
 ```
 
-6. Upgrade kubelet and kubectl 
-
-```
-# replace x in 1.31.x-* with the latest patch version
-sudo apt-mark unhold kubelet kubectl && \
-sudo apt-get update && sudo apt-get install -y kubelet='1.31.x-*' kubectl='1.31.x-*' && \
-sudo apt-mark hold kubelet kubectl
-
-```
-
-```
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
+Let's check the permission
+```console
+root@localhost:~# kubectl auth can-i get pods --as build-sa
+yes
+root@localhost:~# kubectl get pods --as build-sa
+NAME          READY   STATUS    RESTARTS   AGE
+nginx-pod-3   1/1     Running   0          4d22h
 ```
 
-7. Uncordon the node 
+#### Check service account data in pod details
+```console
+root@localhost:~# kubectl describe pod nginx-pod-3
+Name:             nginx-pod-3
+Namespace:        default
+Priority:         0
+Service Account:  default
 
-```
-# replace <node-to-uncordon> with the name of your node
-kubectl uncordon <node-to-uncordon>
+...
 
-```
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-gksff (ro)
 
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/cudb5dfwshtrx2rvuo70.png)
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ib3eqb192gvnqj4xz9o4.png)
-
-(Photos from the video)
-
-
-### Upgrade worker nodes 
-
-[source](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/#how-it-works)
-
-> How it works
-> kubeadm upgrade apply does the following:
->     Checks that your cluster is in an upgradeable state:
->         The API server is reachable
->         All nodes are in the Ready state
->         The control plane is healthy
->     Enforces the version skew policies.
->     Makes sure the control plane images are available or available to pull to the machine.
->     Generates replacements and/or uses user supplied overwrites if component configs require version upgrades.
->     Upgrades the control plane components or rollbacks if any of them fails to come up.
->     Applies the new CoreDNS and kube-proxy manifests and makes sure that all necessary RBAC rules are created.
->     Creates new certificate and key files of the API server and backs up old files if they're about to expire in 180 days.
-> kubeadm upgrade node does the following on additional control plane nodes:
->     Fetches the kubeadm ClusterConfiguration from the cluster.
->     Optionally backups the kube-apiserver certificate.
->     Upgrades the static Pod manifests for the control plane components.
->     Upgrades the kubelet configuration for this node.
-> kubeadm upgrade node does the following on worker nodes:
->     Fetches the kubeadm ClusterConfiguration from the cluster.
->     Upgrades the kubelet configuration for this node.
-
-
-[source](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/upgrading-linux-nodes/)
-
-1. Upgrade kubeadm 
-
-```
-# replace x in 1.31.x-* with the latest patch version
-sudo apt-mark unhold kubeadm && \
-sudo apt-get update && sudo apt-get install -y kubeadm='1.31.x-*' && \
-sudo apt-mark hold kubeadm
-
+...
 ```
 
-2. Call "kubeadm upgrade" 
+```console
+root@localhost:~# kubectl exec -it nginx-pod-3 -- bash
+root@nginx-pod-3:/# ls -lh /var/run/secrets/kubernetes.io/serviceaccount/
+total 0
+lrwxrwxrwx 1 root root 13 Jul 24 17:04 ca.crt -> ..data/ca.crt
+lrwxrwxrwx 1 root root 16 Jul 24 17:04 namespace -> ..data/namespace
+lrwxrwxrwx 1 root root 12 Jul 24 17:04 token -> ..data/token
 
 ```
-sudo kubeadm upgrade node
-
-```
-
-3. Drain the node 
-
-```
-# execute this command on a control plane node
-# replace <node-to-drain> with the name of your node you are draining
-kubectl drain <node-to-drain> --ignore-daemonsets
-
-```
-
-4. Upgrade kubelet and kubectl 
-
-```
-# replace x in 1.31.x-* with the latest patch version
-sudo apt-mark unhold kubelet kubectl && \
-sudo apt-get update && sudo apt-get install -y kubelet='1.31.x-*' kubectl='1.31.x-*' && \
-sudo apt-mark hold kubelet kubectl
-
-```
-
-```
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-```
-
-5. Uncordon the node 
-
-```
-# execute this command on a control plane node
-# replace <node-to-uncordon> with the name of your node
-kubectl uncordon <node-to-uncordon>
-
-```
-
-### Summary
-
-![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/l5maqg7po4wktt6rgv4h.png)
-
-(Photo from the video)
-
-
-
-
-
-
-
-
 
 
 
