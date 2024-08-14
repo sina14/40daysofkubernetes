@@ -68,6 +68,7 @@ Upgrading strategies:
 
 ---
 
+### Upgrade Master node
 
 1. Changing the package repository 
 [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/#verifying-if-the-kubernetes-package-repositories-are-used)
@@ -143,10 +144,12 @@ kubectl uncordon <node-to-uncordon>
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/cudb5dfwshtrx2rvuo70.png)
 
-(Photo from the video)
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ib3eqb192gvnqj4xz9o4.png)
+
+(Photos from the video)
 
 
-8. Upgrade worker nodes 
+### Upgrade worker nodes 
 
 [source](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/#how-it-works)
 
@@ -172,12 +175,62 @@ kubectl uncordon <node-to-uncordon>
 >     Upgrades the kubelet configuration for this node.
 
 
+[source](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/upgrading-linux-nodes/)
 
+1. Upgrade kubeadm 
 
+```
+# replace x in 1.31.x-* with the latest patch version
+sudo apt-mark unhold kubeadm && \
+sudo apt-get update && sudo apt-get install -y kubeadm='1.31.x-*' && \
+sudo apt-mark hold kubeadm
 
+```
 
+2. Call "kubeadm upgrade" 
 
+```
+sudo kubeadm upgrade node
 
+```
+
+3. Drain the node 
+
+```
+# execute this command on a control plane node
+# replace <node-to-drain> with the name of your node you are draining
+kubectl drain <node-to-drain> --ignore-daemonsets
+
+```
+
+4. Upgrade kubelet and kubectl 
+
+```
+# replace x in 1.31.x-* with the latest patch version
+sudo apt-mark unhold kubelet kubectl && \
+sudo apt-get update && sudo apt-get install -y kubelet='1.31.x-*' kubectl='1.31.x-*' && \
+sudo apt-mark hold kubelet kubectl
+
+```
+
+```
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+
+```
+
+5. Uncordon the node 
+
+```
+# execute this command on a control plane node
+# replace <node-to-uncordon> with the name of your node
+kubectl uncordon <node-to-uncordon>
+
+```
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ksjiqr3t2039v8vljiuc.png)
+
+(Photo from the video)
 
 
 
