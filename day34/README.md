@@ -42,12 +42,29 @@ For example,at first upgrade `1.28.2` to `1.29.3`, then we can upgrade from `1.2
 
 (Photo from the video)
 
+As a `kubernetes` cluster admin, every month or every couple of months, we need to upgrade the cluster, that's why it's important concept for administration.
+
+**Note** at single time, `kubernetes` only support last 3 minor versions. It means, no new bug fixes or updating the features on that minor version.
+
+>Example:
+>
+>    kube-apiserver is at `1.31`
+>    kubelet is supported at `1.31`, `1.30`, `1.29`, and `1.28`
+[source](https://kubernetes.io/releases/version-skew-policy/#kubelet)
 
 
+Official document for upgrading with `kubeadm`, [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
+>The upgrade workflow at high level is the following:
+>
+>    Upgrade a primary control plane node.
+>    Upgrade additional control plane nodes.
+>    Upgrade worker nodes.
 
 
-
-
+Upgrading strategies:
+1. All at once, we have downtime.
+2. Rolling update, one by one.
+3. Blue Green, upgrading new cluster and transfer workloads from old one.
 
 
 
