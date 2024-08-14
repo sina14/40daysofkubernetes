@@ -1,6 +1,11 @@
 
 # EDITING in Progress!
 
+[source0](https://spacelift.io/blog/kubernetes-ingress)
+[source1](https://www.solo.io/topics/kubernetes-api-gateway/kubernetes-ingress/)
+[source2](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+[source3](https://konghq.com/blog/learning-center/what-is-kubernetes-ingress)
+
 1. Why ingress
    disadvantages
    advantages
