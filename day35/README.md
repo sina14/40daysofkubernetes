@@ -104,7 +104,8 @@ snapshot restore /opt/etcd-backup.db \
 
 ```
 
-Then, we need to edit the `etcd` manifest in `/etc/kubernetes/manifests/etcd.yaml` and the value of 
+Then, we need to edit the `etcd` manifest in `/etc/kubernetes/manifests/etcd.yaml` and the value of:
+
     - `--data-dir` option from `/var/lib/etcd` to `/var/lib/etcd-restore-from-backup`
     - `mountPath` from `/var/lib/etcd` to `/var/lib/etcd-restore-from-backup`
     - `hostPath` from `/var/lib/etcd` to `/var/lib/etcd-restore-from-backup`
