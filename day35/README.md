@@ -65,17 +65,51 @@ root@localhost:~# etcdctl --endpoints=https://127.0.0.1:2379 \
 --cacert=/etc/kubernetes/pki/etcd/ca.crt \
 --cert=/etc/kubernetes/pki/etcd/server.crt \
 --key=/etc/kubernetes/pki/etcd/server.key \
-snapshot save /opt/etcd-backup
+snapshot save /opt/etcd-backup.db
 
 ```
 
+- Verify the snapshot
+
+```sh
+root@localhost:~# etcdctl --write-out=table snapshot status /opt/etcd-backup.db
+
+```
+the output would be like:
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/56o65ya3yasvsiuy461o.png)
+
+(Photo from the video)
 
 
+- Let's restore the snapshot
 
+> Caution:
+>
+>If any API servers are running in your cluster, you should not attempt to restore instances of etcd. Instead, follow these steps to restore etcd:
+>
+>    - stop all API server instances
+>    - restore state in all etcd instances
+>    - restart all API server instances
 
+[source](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#restoring-an-etcd-cluster)
 
+```sh
+root@localhost:~# etcdctl --endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key \
+snapshot restore /opt/etcd-backup.db \
+--data-dir=/var/lib/etcd-restore-from-backup
 
+```
 
+Then, we need to edit the `etcd` manifest in `/etc/kubernetes/manifests/etcd.yaml` and the value of 
+    - `--data-dir` option from `/var/lib/etcd` to `/var/lib/etcd-restore-from-backup`
+    - `mountPath` from `/var/lib/etcd` to `/var/lib/etcd-restore-from-backup`
+    - `hostPath` from `/var/lib/etcd` to `/var/lib/etcd-restore-from-backup`
+
+and restart the `kubelet`.
 
 
 
