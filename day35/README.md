@@ -33,6 +33,48 @@ It's not efficient way to backing up the cluster because we didn't backup the pe
     - --key-file=/etc/kubernetes/pki/etcd/server.key
     - --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
 
+- We have 2 volume mounts:
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/5im6iwq3f5pyjy5lfc7r.png)
+
+(Photo from the video)
+
+    - `etcd-data`: /var/lib/etcd - the data directory
+    - `etcd-cets`: /etc/kubernetes/pki/etcd - the cert keys directory
+
+
+- Install the `etcdctl` utility
+
+```sh
+root@localhost:~# apt install etcd-client -y
+
+```
+
+- Create an `env` for latest version of the utility because it uses version 2 by default.
+
+```sh
+root@localhost:~# export ETCDCTL_API=3
+
+```
+
+- Built-in snapshot
+[source](https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#built-in-snapshot)
+
+```console
+root@localhost:~# etcdctl --endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key \
+snapshot save /opt/etcd-backup
+
+```
+
+
+
+
+
+
+
 
 
 
