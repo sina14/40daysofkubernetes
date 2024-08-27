@@ -129,6 +129,35 @@ metrics-server-8455d49879-5mqr2   1/1     Running   0          2m46s
 
 ```
 
+We have to wait some time to it collects the metrics:
+
+```sh
+root@sinaops:~# kubectl top nodes
+error: Metrics API not available
+root@sinaops:~# kubectl top pods
+error: Metrics API not available
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
