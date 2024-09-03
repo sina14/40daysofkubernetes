@@ -48,20 +48,164 @@ So this is where `Ingress` comes to picture, when we need a `load-balancer`, an 
 [source](https://blog.getambassador.io/getting-edgy-3-types-of-kubernetes-ingress-nodeports-load-balancers-and-ingress-controllers-b40ec8c0edb5)
 
 
+**Note** the `Load-Balancing` companies such as `Nginx`, develops a `Kubernetes Ingress-Controller` that when it would be deployed through `Helm-Chart` or a manifest, read a `yaml` file.
+
+
+**Note** the `Kubernetes Service` can provides load-balancing but with basic features such as Round robin load balancing. But we know there are lots of enterprise technologies that we might need.
+
+
+**Note** we need to create a `ingress-resource` that `ingress-controller` will watch and create and configure `load-balancer` based on it.
+
+
+- Some `ingress-controller` for `Kubernetes`:
+> 1. Emissary
+> 2. Nginx
+> 3. HAProxy
+> 4. Enovy
+> 5. Traefik
+> 6. F5 Container
+> 7. Contour
+
+[source](https://amazic.com/list-of-the-top-ingress-controllers-for-kubernetes/)
+
+
+### Demo
+
+#### 1. Clone files from repository
+
+[Repository](https://github.com/piyushsachdeva/CKA-2024/tree/main/Resources/Day33/Flask)
+
+```sh
+root@sinaops:/opt/Flask# tree .
+.
+├── Dockerfile
+├── app.py
+├── k8s
+│   ├── deployment.yaml
+│   ├── ingress.yaml
+│   └── service.yaml
+└── requirements.txt
+
+1 directory, 6 files
+```
+
+#### 2. Build the image and push to my repository
+
+```sh
+root@sinaops:/opt/Flask# docker build -t sinatavakkol/my-ingress-demo:v1 .
+
+```
+
+```sh
+root@sinaops:/opt/Flask# docker images
+REPOSITORY                                             TAG           IMAGE ID       CREATED          SIZE
+sinatavakkol/my-ingress-demo                           v1            21794fe19661   19 seconds ago   137MB
+...
+
+```
+
+```sh
+root@sinaops:/opt/Flask# docker push sinatavakkol/my-ingress-demo:v1
+The push refers to repository [docker.io/sinatavakkol/my-ingress-demo]
+c15e83a40dc3: Pushed
+e99cb889ac18: Pushed
+34b40c4769c3: Pushed
+d56439f47b97: Pushed
+b8594deafbe5: Mounted from library/python
+8a55150afecc: Mounted from library/python
+ad34ffec41dd: Mounted from library/python
+f19cb1e4112d: Mounted from library/python
+d310e774110a: Mounted from library/python
+v1: digest: sha256:e337d05667d7f0370268bff90dea054d49079a02f5be7196a9b74c237fd2e770 size: 2202
+
+```
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3hz6caatp0r72ynq5jwf.png)
+
+
+#### 3. Replace the right image name for deployment file in `k8s` directory
+
+```sh
+root@sinaops:/opt/Flask# vim k8s/deployment.yaml
+
+```
+**Line 19**
+
+
+#### 4. Apply the deployment and service manifests
+
+```sh
+root@sinaops:/opt/Flask# kubectl apply -f k8s/deployment.yaml
+deployment.apps/hello-world created
+root@sinaops:~# kubectl get deploy -o wide
+NAME          READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS    IMAGES                            SELECTOR
+hello-world   1/1     1            1           17m   hello-world   sinatavakkol/my-ingress-demo:v1   app=hello-world
+root@sinaops:/opt/Flask# kubectl apply -f k8s/service.yaml
+service/hello-world created
+root@sinaops:/opt/Flask# kubectl get svc
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+hello-world   ClusterIP   10.110.58.148   <none>        80/TCP    11s
+kubernetes    ClusterIP   10.96.0.1       <none>        443/TCP   8d
+
+```
+
+- Test the service:
+
+```sh
+root@sinaops:/opt/Flask# curl 10.110.58.148
+Hello, World!
+
+```
+
+
+#### 5. The ingress resource
+
+Based on the rule on the resource, if someone who go for `example.com`, followed by `/`, he reached to `hello-world` app followed by `port: 80`.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-world
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "example.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-world
+            port:
+              number: 80
+
+```
+
+```sh
+root@sinaops:/opt/Flask# kubectl apply -f  k8s/ingress.yaml
+ingress.networking.k8s.io/hello-world created
+root@sinaops:/opt/Flask# kubectl get ingress
+NAME          CLASS   HOSTS         ADDRESS   PORTS   AGE
+hello-world   nginx   example.com             80      25s
+
+```
+
+As we can see, there's not any address assigned because nobody is watching this resource!
+So we need an `Ingress-Controller`.
+Let's use **nginx ingress controller**.
+
+
+
 
 
 
 ---
 
-2. What's ingress
-  what it is doing?
-   some kind of ing. controllers from some company
 
-4. 19:00 hands-on demo
-
-clone a repo
-docker build image
-push to registry
 
 ![image](https://github.com/user-attachments/assets/67514bc1-e68c-4e7e-8acf-01778fcd1a91)
 
