@@ -199,34 +199,20 @@ So we need an `Ingress-Controller`.
 Let's use **nginx ingress controller**.
 
 
+#### 6. Ingress Controller
 
+There are 2 types of **nginx ingress controller**, one is for `Kubernetes` community and one is for `Nginx` developer:
 
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/6fckdjnrdgpjo6yyi1tw.png)
+
+**Ingress-NGINX Controller** vs **NGINX Ingress Controller**.
+
+[source](https://kubernetes.github.io/ingress-nginx/deploy/#local-testing)
+
+It continues on aws cloud ... I have no access to it
 
 
 ---
-
-
-
-![image](https://github.com/user-attachments/assets/67514bc1-e68c-4e7e-8acf-01778fcd1a91)
-
-
-create deployment
-create service
-
-![image](https://github.com/user-attachments/assets/3ef014b2-9d8c-4de3-834c-e301498b01d8)
-
-
-curl svc_ip
-cluster_ip or node_port
-
-![image](https://github.com/user-attachments/assets/d3632662-ced9-421c-a337-38118f113bf6)
-
-
-create ingress
-
-2 types of nginx ingress controller
-
-![image](https://github.com/user-attachments/assets/a029f9c0-6cbd-4824-9084-564c81811197)
 
 
 nginx contoller 
@@ -259,14 +245,6 @@ we should to edit /etc/hosts by nodeport ip address
 
 ![image](https://github.com/user-attachments/assets/46c57567-1287-4d45-97da-adb2d5bfd982)
 
-
-
-Useful sources:
-
-[source0](https://spacelift.io/blog/kubernetes-ingress)
-[source1](https://www.solo.io/topics/kubernetes-api-gateway/kubernetes-ingress/)
-[source2](https://kubernetes.io/docs/concepts/services-networking/ingress/)
-[source3](https://konghq.com/blog/learning-center/what-is-kubernetes-ingress)
 
 
 
