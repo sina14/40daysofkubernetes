@@ -48,8 +48,8 @@ Ubuntu 22.04.4 LTS   v1.30.4
 - With custom column and statement
 
 ```sh
-root@sinaops:~# kubectl get nodes -o=custom-columns='InternalIP:{.status.addresses[?(@.type=="Hostname")].address},OsType:{.status.nodeInfo.osImage}'
-InternalIP   OsType
+root@sinaops:~# kubectl get nodes -o=custom-columns='Host:{.status.addresses[?(@.type=="Hostname")].address},OsType:{.status.nodeInfo.osImage}'
+Host         OsType
 cloudy.net   Ubuntu 24.04.1 LTS
 jolly-net    Ubuntu 22.04.2 LTS
 sinaops      Ubuntu 22.04.4 LTS
