@@ -26,16 +26,35 @@ kubectl get nodes -o yaml
 
 ```
 
+- Sample of jsonpath:
 
- ```sh
+```sh
 root@sinaops:~# kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.osImage}{"\n"}'
 Ubuntu 24.04.1 LTS Ubuntu 22.04.2 LTS Ubuntu 22.04.4 LTS
 
 ```
 
+- With custom column:
 
+```sh
+root@sinaops:~# kubectl get nodes -o='custom-columns=OsType:{.status.nodeInfo.osImage},KubeletVersion:{.status.nodeInfo.kubeletVersion}'
+OsType               KubeletVersion
+Ubuntu 24.04.1 LTS   v1.30.4
+Ubuntu 22.04.2 LTS   v1.30.0
+Ubuntu 22.04.4 LTS   v1.30.4
 
+```
 
+- With custom column and statement
+
+```sh
+root@sinaops:~# kubectl get nodes -o=custom-columns='InternalIP:{.status.addresses[?(@.type=="Hostname")].address},OsType:{.status.nodeInfo.osImage}'
+InternalIP   OsType
+cloudy.net   Ubuntu 24.04.1 LTS
+jolly-net    Ubuntu 22.04.2 LTS
+sinaops      Ubuntu 22.04.4 LTS
+
+```
 
 
 
