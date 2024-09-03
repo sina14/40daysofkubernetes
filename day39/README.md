@@ -11,7 +11,11 @@ We have troubleshoot and fix worker node-related issues in Kubernetes in this vi
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/l86mh5yr5l1a7nmf6j4n.png)
 
-(Photo from the video)
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3rkjrliokin0z31l848a.png)
+
+
+(Photos from the video)
 
 
 
