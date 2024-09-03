@@ -45,7 +45,7 @@ Ubuntu 22.04.4 LTS   v1.30.4
 
 ```
 
-- With custom column and statement
+- With custom column and statement:
 
 ```sh
 root@sinaops:~# kubectl get nodes -o=custom-columns='Host:{.status.addresses[?(@.type=="Hostname")].address},OsType:{.status.nodeInfo.osImage}'
@@ -56,5 +56,18 @@ sinaops      Ubuntu 22.04.4 LTS
 
 ```
 
+- Sort by an item:
 
+```sh
+root@sinaops:~# kubectl get nodes
+NAME         STATUS                     ROLES           AGE     VERSION
+cloudy.net   Ready                      worker          6d      v1.30.4
+jolly-net    Ready,SchedulingDisabled   worker          7d22h   v1.30.0
+sinaops      Ready                      control-plane   8d      v1.30.4
+root@sinaops:~# kubectl get nodes --sort-by=.status.nodeInfo.kubeletVersion
+NAME         STATUS                     ROLES           AGE     VERSION
+jolly-net    Ready,SchedulingDisabled   worker          7d22h   v1.30.0
+cloudy.net   Ready                      worker          6d      v1.30.4
+sinaops      Ready                      control-plane   8d      v1.30.4
 
+```
