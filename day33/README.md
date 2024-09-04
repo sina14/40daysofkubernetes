@@ -213,10 +213,12 @@ It continues on aws cloud ... I have no access to it
 
 
 ---
+---
 
 
-nginx contoller 
+## Nginx Contoller 
 
+(From the video)
 
 - Because the cloud controller manager doesn't exist in this `Kubernetes` cluster:
 
