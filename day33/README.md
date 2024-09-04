@@ -218,19 +218,19 @@ It continues on aws cloud ... I have no access to it
 nginx contoller 
 
 
-because the cloud controller manager doesn't exist in this kuber cluster
+- Because the cloud controller manager doesn't exist in this `Kubernetes` cluster:
 
 ![image](https://github.com/user-attachments/assets/1195eb57-b1bf-47e0-b0b8-8f1ac90707f5)
 
 
-we edit ing contoller from load balancer to node port so it will work
+- We edit `ingress-contoller` from `loadBalancer` type to `nodePort` so it will work:
 
 ![image](https://github.com/user-attachments/assets/6ba6f767-c0e2-45ee-9327-54225eccfd0a)
 
 ![image](https://github.com/user-attachments/assets/41f7d514-7509-4c0e-b3e1-f4564efacacd)
 
 
-delete ing and create it again
+- Delete `ingress-resource` and create it again:
 
 ![image](https://github.com/user-attachments/assets/0f5423c8-e1bc-479b-99ce-632dc2a4a2fc)
 
@@ -240,8 +240,7 @@ delete ing and create it again
 
 ![image](https://github.com/user-attachments/assets/cc90df41-2acd-4b1d-9302-3aadbb2f6bba)
 
-because we told the load balancer just route when domain name get not ip address
-we should to edit /etc/hosts by nodeport ip address
+- Because we told the `load-balancer` just route when domain name won't get `ip-address`, we should to edit /etc/hosts by `nodePort` IP address.
 
 ![image](https://github.com/user-attachments/assets/46c57567-1287-4d45-97da-adb2d5bfd982)
 
